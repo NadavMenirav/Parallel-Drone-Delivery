@@ -47,4 +47,22 @@ typedef struct {
     CustomerStatus status;
 } Customer;
 
+// This struct represents a single drone
+typedef struct {
+    int id;
+    int capacity; // How many bread loaves the drone can hold
+    int load; // Current bread load
+    int availableAtRound; // The round in which the drone will finish its task and will be free
+    Position pos;
+    double velocity; // The speed in which the drone flies
+    Customer* currentCustomer; // The current customer it serves
+} Drone;
+
+// This struct represents the DroneBase, where all the drones spawn
+typedef struct {
+    Position pos;
+    Drone* drones; // Has an array of all the drones
+    int droneCount;
+} DroneBase;
+
 #endif //FINAL_PROJECT_ENTITIES_H

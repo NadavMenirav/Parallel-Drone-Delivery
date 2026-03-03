@@ -3,6 +3,13 @@
 #ifndef FINAL_PROJECT_ENTITIES_H
 #define FINAL_PROJECT_ENTITIES_H
 
+// This enum represents the status of the customers
+typedef enum {
+    CUSTOMER_ACTIVE,
+    CUSTOMER_SERVED,
+    CUSTOMER_DEPARTED
+} CustomerStatus;
+
 // This struct represents a point in R^2
 typedef struct {
     double x;
@@ -30,5 +37,14 @@ typedef struct {
     int ruleCount; // Size of distribution array
     int capacity; // Maximum number of bread loaves.
 } Bakery;
+
+// This struct represents the customer
+typedef struct {
+    int id;
+    Position pos;
+    int demand; // remaining bread demand
+    int priority; // Goes up by 1 in each round where the customer isn't served
+    CustomerStatus status;
+} Customer;
 
 #endif //FINAL_PROJECT_ENTITIES_H

@@ -50,3 +50,13 @@ void initDroneBase(const Position pos, DroneBase* droneBase) {
     droneBase->drones = NULL;
     droneBase->droneCount = 0;
 }
+
+// This function frees the allocated memory from initBakery
+void freeBakery(const Bakery* bakery) {
+    free(bakery->distribution);
+}
+
+// This function frees the allocated memory of the drones in the DroneBase
+void freeDroneBase(const DroneBase* droneBase) {
+    free(droneBase->drones);
+}

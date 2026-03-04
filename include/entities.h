@@ -68,6 +68,9 @@ typedef struct {
 void initBakery(int id, Position pos, const ProductionRule* distribution, int ruleCount, int capacity, Bakery* bakery);
 void initCustomer(int id, Position pos, int demand, Customer* customer);
 void initDrone(int id, int capacity, int currentRound, Position pos, double velocity, Drone* drone);
-void initDroneBase(const Position pos, DroneBase* droneBase);
+void initDroneBase(Position pos, DroneBase* droneBase);
+
+void freeBakery(const Bakery* bakery);
+void freeDroneBase(const DroneBase* droneBase);
 
 #endif //FINAL_PROJECT_ENTITIES_H

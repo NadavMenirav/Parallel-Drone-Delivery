@@ -1,7 +1,8 @@
 // The goal of this file is to initialize the struct and allocate / free the required memory
-#include <stdlib.h>
-
 #include "../include/entities.h"
+
+#include <stdlib.h>
+#include <time.h>
 
 // This function initializes a bakery and handles the allocated memory
 void initBakery(const int id, const Position pos, const ProductionRule* distribution, const int ruleCount,
@@ -24,6 +25,9 @@ void initBakery(const int id, const Position pos, const ProductionRule* distribu
         bakery->cumulativeProb[i].probability = bakery->cumulativeProb[i - 1].probability
         + distribution[i].probability;
     }
+
+    // In order to ensure each bakery starts with a different seed, we use a unique formula to calculate the seed
+    bakery->seed = (unsigned int)time(NULL) ^ id;
 }
 
 // This function initializes a customer and handles the allocated memory

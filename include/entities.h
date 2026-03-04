@@ -43,6 +43,7 @@ typedef struct {
     ProductionRule* cumulativeProb;
     int ruleCount; // Size of distribution array
     int capacity; // Maximum number of bread loaves.
+    unsigned int seed; // The seed the bakery will use in order to generate the number of bread loaves
 } Bakery;
 
 // This struct represents the customer

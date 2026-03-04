@@ -33,7 +33,14 @@ typedef struct {
     int id;
     Position pos;
     int inventory; // Current bread count
-    ProductionRule* distribution; // The different amount of bread the bakery can make each round and the probability
+
+    /*
+     * Each bakery has a distribution of how many breads it produces each day.
+     * The cumulativeProb array is an array of ProductionRules but instead of the probability being the probability to
+     * produce exactly this number of bread loaves, it represents the probability to receive this number of bread
+     * loaves, or another number which appears earlier in the array
+     */
+    ProductionRule* cumulativeProb;
     int ruleCount; // Size of distribution array
     int capacity; // Maximum number of bread loaves.
 } Bakery;

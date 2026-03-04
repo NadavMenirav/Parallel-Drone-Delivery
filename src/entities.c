@@ -4,7 +4,8 @@
 #include "../include/entities.h"
 
 // This function initializes a bakery and handles the allocated memory
-void initBakery(const int id, const Position pos, const ProductionRule* distribution, const int ruleCount, const int capacity, Bakery* bakery) {
+void initBakery(const int id, const Position pos, const ProductionRule* distribution, const int ruleCount,
+    const int capacity, Bakery* bakery) {
     bakery->id = id;
     bakery->pos = pos;
     bakery->ruleCount = ruleCount;
@@ -14,11 +15,14 @@ void initBakery(const int id, const Position pos, const ProductionRule* distribu
     bakery->inventory = 0;
 
     // We receive the distribution array which was created in the stack and allocate the memory for it
-    bakery->distribution = malloc(sizeof(ProductionRule) * ruleCount);
+    bakery->cumulativeProb = malloc(sizeof(ProductionRule) * ruleCount);
 
     // Insert the data into the array
-    for (int i = 0; i < ruleCount; i++) {
-        bakery->distribution[i] = distribution[i];
+    bakery->cumulativeProb[0] = distribution[0];
+    for (int i = 1; i < ruleCount; i++) {
+        bakery->cumulativeProb[i].breadCount = distribution[i].breadCount;
+        bakery->cumulativeProb[i].probability = bakery->cumulativeProb[i - 1].probability
+        + distribution[i].probability;
     }
 }
 
@@ -53,7 +57,7 @@ void initDroneBase(const Position pos, DroneBase* droneBase) {
 
 // This function frees the allocated memory from initBakery
 void freeBakery(const Bakery* bakery) {
-    free(bakery->distribution);
+    free(bakery->cumulativeProb);
 }
 
 // This function frees the allocated memory of the drones in the DroneBase

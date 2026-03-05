@@ -30,7 +30,7 @@ void test_algorithms() {
 }
 
 int main() {
-    printf("Welcome to the Parallel Drone Delivery Simulation!\n\n");
+    printf("Welcome to the Parallel Drone Delivery Simulation! \n\n");
     
     test_algorithms();
 

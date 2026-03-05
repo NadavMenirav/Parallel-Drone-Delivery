@@ -36,10 +36,7 @@ void updateCustomerPriorities(Customer* customers, int customerCount) {
 // Formula: Score(c) = w_c / T_c (where w_c is priority and T_c is estimated completion time)
 double calculateCustomerScore(int priority, double estimatedTime) {
     // Edge case protection: Prevent division by zero if the estimated time is 0 or negative
-    if (estimatedTime < 0.0) {
-        return -1.0; 
-    }
-    if (estimatedTime == 0){
+    if (estimatedTime <= 0.0) {
         return INFINITY;
     }
     // Cast priority to double to ensure floating-point division

@@ -34,10 +34,15 @@ void produceBread(Bakery* bakeries, const int bakeryCount) {
             }
         }
 
+        // If the condition is never met, we set j to be the last rule
+        if (j == bakeries[i].ruleCount) j = bakeries[i].ruleCount - 1;
+
         // Now we know how much bread we need to produce
         const int breadProduction = bakeries[i].cumulativeProb[j].breadCount;
 
         const int newInventory = bakeries[i].inventory + breadProduction;
+
+        // We cannot exceed the capacity
         bakeries[i].inventory = (newInventory < bakeries[i].capacity) ? newInventory : bakeries[i].capacity;
     }
 }

@@ -6,6 +6,7 @@
 
 void produceBread(Bakery* bakeries, int bakeryCount);
 void updateDrones(Drone* drones, int droneCount, int currentRound);
+void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer** customers, int* cCount);
 
 // This function works in parallel, and is called at the start of every round. It produces the bread for the bakeries
 void produceBread(Bakery* bakeries, const int bakeryCount) {
@@ -62,4 +63,48 @@ void updateDrones(Drone* drones, const int droneCount, const int currentRound) {
             drone->currentCustomer = NULL;
         }
     }
+}
+
+// This function is a helper function that for checks, used to mock a city (bakeries, drones, customers, etc.)
+void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer** customers, int* cCount) {
+
+    // 1 bakery, 2 drones, 2 customers
+    *bCount = 1;
+    *dCount = 2;
+    *cCount = 2;
+
+    // Allocate the memory
+    *bakeries = (Bakery*) malloc(sizeof(Bakery) * (*bCount));
+    *drones = (Drone*) malloc(sizeof(Drone) * (*dCount));
+    *customers = (Customer*) malloc(sizeof(Customer) * (*cCount));
+
+    // Made-up bakery stats
+    (*bakeries)[0].id = 1;
+    (*bakeries)[0].inventory = 0;
+    (*bakeries)[0].capacity = 100;
+    (*bakeries)[0].seed = 42;
+    (*bakeries)[0].ruleCount = 1;
+    (*bakeries)[0].cumulativeProb = (ProductionRule*)malloc(sizeof(ProductionRule));
+    (*bakeries)[0].cumulativeProb[0].probability = 1.0;
+    (*bakeries)[0].cumulativeProb[0].breadCount = 10;
+
+    // Made-up drones stats
+    for(int i = 0; i < *dCount; i++) {
+        (*drones)[i].id = i + 1;
+        (*drones)[i].availableAtRound = 0;
+        (*drones)[i].currentCustomer = NULL;
+    }
+
+    // Made-up customer-stats
+    for(int i = 0; i < *cCount; i++) {
+        (*customers)[i].id = i + 1;
+        (*customers)[i].priority = 1;
+        (*customers)[i].status = CUSTOMER_ACTIVE;
+        (*customers)[i].demand = 5;
+    }
+}
+
+
+int main() {
+
 }

@@ -42,3 +42,5 @@ add_executable(produce_tests
 
 target_link_libraries(produce_tests PRIVATE OpenMP::OpenMP_C)
 target_include_directories(produce_tests PRIVATE /opt/homebrew/opt/libomp/include)
+
+include_directories("/opt/homebrew/opt/libomp/include")

@@ -3,6 +3,7 @@
 #include <omp.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 
 void produceBread(Bakery* bakeries, int bakeryCount);
 void updateDrones(Drone* drones, int droneCount, int currentRound);
@@ -107,4 +108,45 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
 
 int main() {
 
+    // Creating the mocked system
+    Bakery* bakeries;
+    Drone* drones;
+    Customer* customers;
+
+    int bCount;
+    int dCount;
+    int cCount;
+
+    initSystemMock(&bakeries, &bCount, &drones, &dCount, &customers, &cCount);
+
+    int t = 1; // the current round
+
+    // This while function simulates the entire delivery system. Each iteration is a different round.
+    while (t < 10) {
+
+        // Prints to decorate the round
+        printf("\n=== Round %d ===\n", t);
+
+        /*
+         * Stage 1 - State update
+         * The bakeries increase their stock by their production rate
+         */
+        produceBread(bakeries, bCount);
+        printf("Bakery %d inventory after production: %d\n", bakeries[0].id, bakeries[0].inventory);
+
+        // Now, drones update their position and availability after previous deliveries
+        updateDrones(drones, dCount, t);
+        printf("Drone %d available at round: %d\n", drones[0].id, drones[0].availableAtRound);
+        printf("Drone %d available at round: %d\n", drones[1].id, drones[1].availableAtRound);
+
+        // ToDo: stages 2, 3, 4
+
+        t++;
+    }
+
+
+    free(bakeries[0].cumulativeProb);
+    free(bakeries);
+    free(drones);
+    free(customers);
 }

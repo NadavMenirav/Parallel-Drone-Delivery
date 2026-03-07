@@ -55,6 +55,7 @@ typedef struct {
     CustomerStatus status;
     double closestBakeryDistance;
     double tempScore; // Temporary score used for sorting customers in Stage 2
+    int distanceMatrixRow; // The row index in the distance matrix corresponding to this customer, set by calculateDistanceMatrix()
 } Customer;
 
 // This struct represents a single drone

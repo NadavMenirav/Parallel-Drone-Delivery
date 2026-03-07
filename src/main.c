@@ -102,6 +102,8 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
     // Made-up drones stats
     for(int i = 0; i < *dCount; i++) {
         (*drones)[i].id = i + 1;
+        (*drones)[i].pos.x = 0.0;
+        (*drones)[i].pos.y = 0.0;
         (*drones)[i].velocity = 2.0;
         (*drones)[i].capacity = 5;
         (*drones)[i].availableAtRound = 0;
@@ -118,18 +120,18 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
         (*customers)[i].demand = 5;
         (*customers)[i].closestBakeryDistance = DBL_MAX;
         (*customers)[i].tempScore = -1.0;
+        (*customers)[i].distanceMatrixRow = -1; // Will be set by calculateDistanceMatrix()
     }
 }
 
-// This function computes the closest bakery to every customer
+// This function computes the closest bakery to every customer.
+// Uses each customer's distanceMatrixRow field for correct matrix lookup after sorting.
 void findClosestBakery(Bakery* bakeries, const int bCount, Customer* customers, const int cCount,
     double** distanceMatrix) {
 
     /*
      * We already have the distance matrix so we need to find the minimum distance for each customer.
-     * In order to do that, we will iterate over the customers in parallel, each thread gets a chunk of customers.
-     * For each customer, the thread will iterate over the corresponding row in the distancesMatrix and will find the
-     * minimal distance
+     * We use distanceMatrixRow for the correct row lookup, so this works even after qsort.
      */
     #pragma omp parallel for default(none) shared(cCount, bCount, distanceMatrix, bakeries, customers)
     for (int i = 0; i < cCount; i++) {
@@ -137,9 +139,12 @@ void findClosestBakery(Bakery* bakeries, const int bCount, Customer* customers, 
         // Double-checking in case the field is not initialized
         customers[i].closestBakeryDistance = DBL_MAX;
 
+        // Use stable row index instead of current array position
+        int matrixRow = customers[i].distanceMatrixRow;
+
         for (int j = 0; j < bCount; j++) {
-            if (distanceMatrix[i][j] < customers[i].closestBakeryDistance) {
-                customers[i].closestBakeryDistance = distanceMatrix[i][j];
+            if (distanceMatrix[matrixRow][j] < customers[i].closestBakeryDistance) {
+                customers[i].closestBakeryDistance = distanceMatrix[matrixRow][j];
             }
         }
     }
@@ -158,7 +163,10 @@ int main() {
 
     initSystemMock(&bakeries, &bCount, &drones, &dCount, &customers, &cCount);
 
-    // Calculating the distances matrix before the simulation loop
+    // Calculating the distances matrix before the simulation loop.
+    // This also sets each customer's distanceMatrixRow field.
+    // NOTE: This matrix assumes customer positions are static. If customers could move,
+    // the matrix would need to be recomputed each round.
     double** distanceMatrix = calculateDistanceMatrix(bakeries, bCount, customers, cCount);
     if (distanceMatrix == NULL) {
         printf("Failed to allocate distance matrix!\n");
@@ -197,12 +205,14 @@ int main() {
         // Calculate scores based on priority and estimated time 
         calculateCustomerScoresStage2(customers, cCount, avgVelocity, avgCapacity);
         
-        // Sort customers to determine serving order (highest score first) 
+        // Sort customers to determine serving order (highest score first).
+        // Each customer's distanceMatrixRow travels with it, so matrix lookups stay correct.
         qsort(customers, cCount, sizeof(Customer), compareCustomersDesc);
         
         printf("Top Customer to serve: ID %d (Score: %.2f)\n", customers[0].id, customers[0].tempScore);
 
-        // ToDo: stage 3
+        // Stage 3 - Drone scheduling and routing
+        assignDronesStage3(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, t);
 
         /*
          * Stage 4 - State transition

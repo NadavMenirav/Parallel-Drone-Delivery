@@ -3,6 +3,7 @@
 #include <omp.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdio.h>
 
 // Calculate Euclidean distance (Pythagorean theorem)
 double calculateDistance(Position p1, Position p2) {
@@ -47,6 +48,12 @@ double calculateCustomerScore(int priority, double estimatedTime) {
 
 // Creates a 2D matrix where rows represent customers and columns represent bakeries.
 // It precomputes the distances in parallel to optimize the scheduling algorithm later.
+//
+// Each customer's distanceMatrixRow field is set to its row index in the matrix,
+// so lookups remain correct even after the customers array is reordered by qsort.
+//
+// NOTE: This matrix assumes customer positions are static throughout the simulation.
+// If customers ever change position, the matrix must be recomputed.
 double** calculateDistanceMatrix(Bakery* bakeries, int bakeryCount, Customer* customers, int customerCount) {
     
     // Step 1: Allocate memory for the array of row pointers (one pointer per customer)
@@ -62,10 +69,11 @@ double** calculateDistanceMatrix(Bakery* bakeries, int bakeryCount, Customer* cu
         if (matrix[i] == NULL) exit(1);
     }
 
-    // Step 3: Compute the distances in parallel
+    // Step 3: Compute the distances in parallel and tag each customer with its stable row index.
     // We parallelize the outer loop, meaning different threads will handle different customers.
     #pragma omp parallel for default(none) shared(matrix, customers, customerCount, bakeries, bakeryCount)
     for (int i = 0; i < customerCount; i++) {
+        customers[i].distanceMatrixRow = i;
         for (int j = 0; j < bakeryCount; j++) {
             // Using the calculateDistance function we already wrote
             matrix[i][j] = calculateDistance(customers[i].pos, bakeries[j].pos);
@@ -169,4 +177,120 @@ void calculateCustomerScoresStage2(Customer* customers, int cCount, double avgVe
 
         customers[i].tempScore = customers[i].priority / t_c;
     }
+}
+// --- Stage 3: Drone Scheduling and Routing ---
+typedef struct {
+    int bakeryId;
+    int droneId;
+    double bestTime;
+    int isValid;
+} Proposal;
+
+// Assigns drones to customers, planning the route and updating inventory.
+void assignDronesStage3(Customer* customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, double** distanceMatrix, int currentRound) {
+    
+    // Step 1: Pre-compute drone-to-bakery distances to save expensive sqrt calculations inside the loop
+    double** droneBakeryDist = malloc(dCount * sizeof(double*));
+    if (droneBakeryDist == NULL) exit(1);
+    for (int d = 0; d < dCount; d++) {
+        droneBakeryDist[d] = malloc(bCount * sizeof(double));
+        if (droneBakeryDist[d] == NULL) exit(1);
+        for (int b = 0; b < bCount; b++) {
+            droneBakeryDist[d][b] = calculateDistance(drones[d].pos, bakeries[b].pos);
+        }
+    }
+
+    Proposal* proposals = malloc(cCount * sizeof(Proposal));
+    if (proposals == NULL) exit(1);
+
+    int matchMade = 1; 
+
+    // Loop until no more matches can be made (Handles order splitting natively!)
+    while (matchMade) {
+        matchMade = 0; 
+
+        // --- Phase 1: Parallel Search ---
+        //
+        // SYNCHRONIZATION NOTE: This parallel region reads drones[d].currentCustomer and
+        // bakeries[b].inventory, which are modified in the sequential Phase 2 below.
+        // This is safe because the implicit barrier at the end of #pragma omp parallel for
+        // guarantees all threads complete Phase 1 before any thread enters Phase 2.
+        // However, this two-phase design is order-dependent — do NOT merge the phases or
+        // remove the barrier without adding explicit synchronization.
+        //
+        #pragma omp parallel for default(none) shared(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, droneBakeryDist, proposals)
+        for (int c = 0; c < cCount; c++) {
+            proposals[c].isValid = 0;
+            proposals[c].bestTime = INFINITY;
+
+            // Only process active customers who still need bread
+            if (customers[c].status != CUSTOMER_ACTIVE || customers[c].demand == 0) continue;
+
+            // Use the customer's stable row index to look up the correct distance matrix row,
+            // since qsort may have reordered the customers array.
+            int matrixRow = customers[c].distanceMatrixRow;
+
+            for (int b = 0; b < bCount; b++) {
+                if (bakeries[b].inventory == 0) continue; // Bakery is empty
+
+                for (int d = 0; d < dCount; d++) {
+                    // Drone must be free right now
+                    if (drones[d].currentCustomer != NULL) continue;
+
+                    // Route: Drone -> Bakery -> Customer
+                    double totalDist = droneBakeryDist[d][b] + distanceMatrix[matrixRow][b];
+                    double flightTime = totalDist / drones[d].velocity; 
+
+                    if (flightTime < proposals[c].bestTime) {
+                        proposals[c].bestTime = flightTime;
+                        proposals[c].bakeryId = b;
+                        proposals[c].droneId = d;
+                        proposals[c].isValid = 1;
+                    }
+                }
+            }
+        }
+
+        // --- Phase 2: Sequential Commitment ---
+        // Iterate over customers (they are already sorted by Score!)
+        for (int c = 0; c < cCount; c++) {
+            if (proposals[c].isValid) {
+                int dId = proposals[c].droneId;
+                int bId = proposals[c].bakeryId;
+
+                // Ensure another higher-priority customer didn't steal our drone or bread
+                if (drones[dId].currentCustomer == NULL && bakeries[bId].inventory > 0) {
+                    
+                    matchMade = 1; // Match successful! Loop will run again to see if splits are needed
+                    
+                    drones[dId].currentCustomer = &customers[c];
+                    
+                    // Calculate how much bread the drone takes
+                    int breadToTake = (customers[c].demand < drones[dId].capacity) ? customers[c].demand : drones[dId].capacity;
+                    if (breadToTake > bakeries[bId].inventory) breadToTake = bakeries[bId].inventory;
+                    
+                    // Update Bakery and Customer
+                    bakeries[bId].inventory -= breadToTake;
+                    customers[c].demand -= breadToTake;
+                    
+                    // Update Drone status (Delivery Execution)
+                    int timeTaken = (int)ceil(proposals[c].bestTime);
+                    drones[dId].availableAtRound = currentRound + timeTaken;
+                    drones[dId].pos = customers[c].pos;
+                    drones[dId].load = breadToTake;
+
+                    if (customers[c].demand == 0) {
+                        customers[c].status = CUSTOMER_SERVED;
+                    }
+                    
+                    printf("  -> Assigned Drone %d to Customer %d (Takes %d bread from Bakery %d, Arrives at round %d)\n", 
+                           drones[dId].id, customers[c].id, breadToTake, bakeries[bId].id, drones[dId].availableAtRound);
+                }
+            }
+        }
+    }
+    // Cleanup memory
+    free(proposals);
+    for (int d = 0; d < dCount; d++) free(droneBakeryDist[d]);
+    free(droneBakeryDist);
 }

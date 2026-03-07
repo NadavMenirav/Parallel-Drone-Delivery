@@ -20,6 +20,9 @@ double calculateCustomerScore(int priority, double estimatedTime);
 // Creates and computes a 2D distance matrix [Customer][Bakery] in parallel
 double** calculateDistanceMatrix(Bakery* bakeries, int bakeryCount, Customer* customers, int customerCount);
 
+// Builds a mapping from customer ID to their original row index in the distance matrix
+int* buildIdToRowMap(Customer* customers, int customerCount, int maxId);
+
 // Frees the memory allocated for the distance matrix
 void freeDistanceMatrix(double** matrix, int customerCount);
 
@@ -34,5 +37,8 @@ void calculateDroneAverages(Drone* drones, int droneCount, double* avgVelocity, 
 
 // Calculates the heuristic score for each active customer and stores it in their tempScore field.
 void calculateCustomerScoresStage2(Customer* customers, int cCount, double avgVelocity, double avgCapacity);
+
+// Assigns drones to customers, planning the route and updating inventory
+void assignDronesStage3(Customer* customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, double** distanceMatrix, int currentRound);
 
 #endif

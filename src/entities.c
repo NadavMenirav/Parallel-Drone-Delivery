@@ -41,6 +41,7 @@ void initCustomer(const int id, const Position pos, const int demand, Customer* 
     customer->status = CUSTOMER_ACTIVE; // When a new order is placed, the customer is currently active
     customer->closestBakeryDistance = DBL_MAX;
     customer->tempScore = -1.0; // Initialize tempScore to an invalid value
+    customer->distanceMatrixRow = -1; // Set by calculateDistanceMatrix()
 }
 
 // This function initializes a drone and handles the allocated memory

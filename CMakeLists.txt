@@ -25,7 +25,7 @@ target_include_directories(final_project PRIVATE /opt/homebrew/opt/libomp/includ
 # Target 2: The Algorithms Tester
 # ==========================================
 add_executable(algo_tests
-        src/AlgoTests.c
+        tests/AlgoTests.c
         src/algorithms.c
         src/entities.c)
 
@@ -36,7 +36,7 @@ target_include_directories(algo_tests PRIVATE /opt/homebrew/opt/libomp/include)
 # Target 3: The Produce Bread Tester
 # ==========================================
 add_executable(produce_tests
-        src/ProduceBreadTests.c
+        tests/ProduceBreadTests.c
         src/main.c
         src/entities.c)
 

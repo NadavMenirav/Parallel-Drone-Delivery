@@ -27,7 +27,8 @@ target_include_directories(final_project PRIVATE /opt/homebrew/opt/libomp/includ
 add_executable(algo_tests
         src/AlgoTests.c
         src/algorithms.c
-        src/entities.c)
+        src/entities.c
+        src/updateDronesTests.c)
 
 target_link_libraries(algo_tests PRIVATE OpenMP::OpenMP_C)
 target_include_directories(algo_tests PRIVATE /opt/homebrew/opt/libomp/include)
@@ -44,3 +45,14 @@ target_link_libraries(produce_tests PRIVATE OpenMP::OpenMP_C)
 target_include_directories(produce_tests PRIVATE /opt/homebrew/opt/libomp/include)
 
 include_directories("/opt/homebrew/opt/libomp/include")
+
+# ==========================================
+# Target 4: The Update Drones Tester
+# ==========================================
+add_executable(drone_tests
+        src/UpdateDronesTests.c
+        src/main.c
+        src/entities.c)
+
+target_link_libraries(drone_tests PRIVATE OpenMP::OpenMP_C)
+target_include_directories(drone_tests PRIVATE /opt/homebrew/opt/libomp/include)

@@ -116,6 +116,8 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
         (*customers)[i].priority = 1;
         (*customers)[i].status = CUSTOMER_ACTIVE;
         (*customers)[i].demand = 5;
+        (*customers)[i].closestBakeryDistance = DBL_MAX;
+        (*customers)[i].tempScore = -1.0;
     }
 }
 
@@ -186,7 +188,21 @@ int main() {
         printf("Drone %d available at round: %d\n", drones[0].id, drones[0].availableAtRound);
         printf("Drone %d available at round: %d\n", drones[1].id, drones[1].availableAtRound);
 
-        // ToDo: stages 2, 3
+        /*
+         * Stage 2 - Order Assignment
+         */
+        double avgVelocity = 0.0, avgCapacity = 0.0;
+        calculateDroneAverages(drones, dCount, &avgVelocity, &avgCapacity);
+        
+        // Calculate scores based on priority and estimated time 
+        calculateCustomerScoresStage2(customers, cCount, avgVelocity, avgCapacity);
+        
+        // Sort customers to determine serving order (highest score first) 
+        qsort(customers, cCount, sizeof(Customer), compareCustomersDesc);
+        
+        printf("Top Customer to serve: ID %d (Score: %.2f)\n", customers[0].id, customers[0].tempScore);
+
+        // ToDo: stage 3
 
         /*
          * Stage 4 - State transition

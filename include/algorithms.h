@@ -26,4 +26,13 @@ void freeDistanceMatrix(double** matrix, int customerCount);
 // Processes customers who have been served, deciding if they leave or order again
 void processCustomerTransitions(Customer* customers, int customerCount);
 
+// Comparison function for qsort to sort customers in descending order based on their tempScore
+int compareCustomersDesc(const void* a, const void* b);
+
+// Calculates the average velocity and capacity of the fleet of drones
+void calculateDroneAverages(Drone* drones, int droneCount, double* avgVelocity, double* avgCapacity);
+
+// Calculates the heuristic score for each active customer and stores it in their tempScore field.
+void calculateCustomerScoresStage2(Customer* customers, int cCount, double avgVelocity, double avgCapacity);
+
 #endif

@@ -124,3 +124,49 @@ void processCustomerTransitions(Customer* customers, int customerCount) {
         }
     }
 }
+
+// Comparison function for qsort to sort customers in descending order based on their tempScore
+int compareCustomersDesc(const void* a, const void* b) {
+    Customer* c1 = (Customer*)a;
+    Customer* c2 = (Customer*)b;
+    if (c1->tempScore < c2->tempScore) return 1;
+    if (c1->tempScore > c2->tempScore) return -1;
+    return 0;
+}
+
+// --- Helper function: Calculate the average velocity and capacity ---
+void calculateDroneAverages(Drone* drones, int droneCount, double* avgVelocity, double* avgCapacity) {
+    double sumVel = 0.0;
+    double sumCap = 0.0;
+    
+    #pragma omp parallel for default(none) shared(drones, droneCount) reduction(+:sumVel, sumCap)
+    for (int i = 0; i < droneCount; i++) {
+        sumVel += drones[i].velocity;
+        sumCap += drones[i].capacity;
+    }
+    
+    *avgVelocity = sumVel / droneCount;
+    *avgCapacity = sumCap / droneCount;
+}
+
+// --- Stage 2: Calculate and Sort ---
+// Calculates the heuristic score for each active customer and stores it in their tempScore field.
+void calculateCustomerScoresStage2(Customer* customers, int cCount, double avgVelocity, double avgCapacity) {
+    #pragma omp parallel for default(none) shared(customers, cCount, avgVelocity, avgCapacity)
+    for (int i = 0; i < cCount; i++) {
+        if (customers[i].status != CUSTOMER_ACTIVE) {
+            customers[i].tempScore = -1.0;
+            continue;
+        }
+
+        double d_min = customers[i].closestBakeryDistance;
+        double t_base = d_min / avgVelocity;
+        if (t_base <= 0.0) t_base = 0.1; 
+
+        double q_c = (double)customers[i].demand;
+        double n_trips = ceil(q_c / avgCapacity);
+        double t_c = t_base * n_trips;
+
+        customers[i].tempScore = customers[i].priority / t_c;
+    }
+}

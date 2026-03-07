@@ -53,6 +53,7 @@ typedef struct {
     int demand; // remaining bread demand
     int priority; // Goes up by 1 in each round where the customer isn't served
     CustomerStatus status;
+    double closestBakeryDistance;
 } Customer;
 
 // This struct represents a single drone

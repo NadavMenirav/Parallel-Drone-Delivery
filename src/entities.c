@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <time.h>
+#include <float.h>
 
 // This function initializes a bakery and handles the allocated memory
 void initBakery(const int id, const Position pos, const ProductionRule* distribution, const int ruleCount,
@@ -38,6 +39,7 @@ void initCustomer(const int id, const Position pos, const int demand, Customer* 
     customer->demand = demand;
     customer->priority = 1; // When a new order is placed, the priority of the customer is 1
     customer->status = CUSTOMER_ACTIVE; // When a new order is placed, the customer is currently active
+    customer->closestBakeryDistance = DBL_MAX;
 }
 
 // This function initializes a drone and handles the allocated memory

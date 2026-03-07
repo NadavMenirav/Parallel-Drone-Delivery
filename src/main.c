@@ -5,10 +5,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <float.h>
 
 void produceBread(Bakery* bakeries, int bakeryCount);
 void updateDrones(Drone* drones, int droneCount, int currentRound);
 void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer** customers, int* cCount);
+void findClosestBakery(Bakery* bakeries, int bCount, Customer* customers, int cCount, double** distanceMatrix);
 
 // This function works in parallel, and is called at the start of every round. It produces the bread for the bakeries
 void produceBread(Bakery* bakeries, const int bakeryCount) {
@@ -117,6 +119,30 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
     }
 }
 
+// This function computes the closest bakery to every customer
+void findClosestBakery(Bakery* bakeries, const int bCount, Customer* customers, const int cCount,
+    double** distanceMatrix) {
+
+    /*
+     * We already have the distance matrix so we need to find the minimum distance for each customer.
+     * In order to do that, we will iterate over the customers in parallel, each thread gets a chunk of customers.
+     * For each customer, the thread will iterate over the corresponding row in the distancesMatrix and will find the
+     * minimal distance
+     */
+    #pragma omp parallel for default(none) shared(cCount, bCount, distanceMatrix, bakeries, customers)
+    for (int i = 0; i < cCount; i++) {
+
+        // Double-checking in case the field is not initialized
+        customers[i].closestBakeryDistance = DBL_MAX;
+
+        for (int j = 0; j < bCount; j++) {
+            if (distanceMatrix[i][j] < customers[i].closestBakeryDistance) {
+                customers[i].closestBakeryDistance = distanceMatrix[i][j];
+            }
+        }
+    }
+}
+
 int main() {
 
     // Creating the mocked system
@@ -136,6 +162,9 @@ int main() {
         printf("Failed to allocate distance matrix!\n");
         exit(1);
     }
+
+    // Initializing the closestBakeryDistance field for every customer
+    findClosestBakery(bakeries, bCount, customers, cCount, distanceMatrix);
 
     int t = 1; // the current round
 

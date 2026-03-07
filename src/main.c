@@ -1,4 +1,5 @@
 #include "../include/entities.h"
+#include "../include/algorithms.h"
 
 #include <omp.h>
 
@@ -83,6 +84,8 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
 
     // Made-up bakery stats
     (*bakeries)[0].id = 1;
+    (*bakeries)[0].pos.x = 0.0;
+    (*bakeries)[0].pos.y = 0.0;
     (*bakeries)[0].inventory = 0;
     (*bakeries)[0].capacity = 100;
     (*bakeries)[0].seed = 42;
@@ -97,6 +100,8 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
     // Made-up drones stats
     for(int i = 0; i < *dCount; i++) {
         (*drones)[i].id = i + 1;
+        (*drones)[i].velocity = 2.0;
+        (*drones)[i].capacity = 5;
         (*drones)[i].availableAtRound = 0;
         (*drones)[i].currentCustomer = NULL;
     }
@@ -104,12 +109,13 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
     // Made-up customer-stats
     for(int i = 0; i < *cCount; i++) {
         (*customers)[i].id = i + 1;
+        (*customers)[i].pos.x = (double)(i + 1) * 10.0;
+        (*customers)[i].pos.y = 0.0;
         (*customers)[i].priority = 1;
         (*customers)[i].status = CUSTOMER_ACTIVE;
         (*customers)[i].demand = 5;
     }
 }
-
 
 int main() {
 
@@ -123,6 +129,13 @@ int main() {
     int cCount;
 
     initSystemMock(&bakeries, &bCount, &drones, &dCount, &customers, &cCount);
+
+    // Calculating the distances matrix before the simulation loop
+    double** distanceMatrix = calculateDistanceMatrix(bakeries, bCount, customers, cCount);
+    if (distanceMatrix == NULL) {
+        printf("Failed to allocate distance matrix!\n");
+        exit(1);
+    }
 
     int t = 1; // the current round
 
@@ -144,11 +157,29 @@ int main() {
         printf("Drone %d available at round: %d\n", drones[0].id, drones[0].availableAtRound);
         printf("Drone %d available at round: %d\n", drones[1].id, drones[1].availableAtRound);
 
-        // ToDo: stages 2, 3, 4
+        // ToDo: stages 2, 3
+
+        /*
+         * Stage 4 - State transition
+         * Customers update their status.
+         * Customers which just got served can either leave the system or place another order
+         * Unserved customers increase their priority
+         */
+
+        // Increase priority for unserved customers
+        updateCustomerPriorities(customers, cCount);
+
+        // Newly served customers will either leave or order more
+        processCustomerTransitions(customers, cCount);
+
+        printf("Customer %d Priority after Stage 4: %d\n", customers[0].id, customers[0].priority);
+        printf("Customer %d Priority after Stage 4: %d\n", customers[1].id, customers[1].priority);
 
         t++;
     }
 
+    // Freeing the allocated memory
+    freeDistanceMatrix(distanceMatrix, cCount);
 
     free(bakeries[0].cumulativeProb);
     free(bakeries);

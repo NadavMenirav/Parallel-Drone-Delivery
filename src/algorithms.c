@@ -59,6 +59,7 @@ double** calculateDistanceMatrix(Bakery* bakeries, int bakeryCount, Customer* cu
     // We do this sequentially because calling malloc concurrently can cause lock contention.
     for (int i = 0; i < customerCount; i++) {
         matrix[i] = (double*)malloc(bakeryCount * sizeof(double));
+        if (matrix[i] == NULL) exit(1);
     }
 
     // Step 3: Compute the distances in parallel

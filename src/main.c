@@ -79,13 +79,18 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
     *drones = (Drone*) malloc(sizeof(Drone) * (*dCount));
     *customers = (Customer*) malloc(sizeof(Customer) * (*cCount));
 
+    if (*bakeries == NULL || *drones == NULL || *customers == NULL) exit(1);
+
     // Made-up bakery stats
     (*bakeries)[0].id = 1;
     (*bakeries)[0].inventory = 0;
     (*bakeries)[0].capacity = 100;
     (*bakeries)[0].seed = 42;
     (*bakeries)[0].ruleCount = 1;
+
     (*bakeries)[0].cumulativeProb = (ProductionRule*)malloc(sizeof(ProductionRule));
+    if ((*bakeries)[0].cumulativeProb == NULL) exit(1);
+
     (*bakeries)[0].cumulativeProb[0].probability = 1.0;
     (*bakeries)[0].cumulativeProb[0].breadCount = 10;
 

@@ -17,6 +17,7 @@ void initBakery(const int id, const Position pos, const ProductionRule* distribu
 
     // We receive the distribution array which was created in the stack and allocate the memory for it
     bakery->cumulativeProb = malloc(sizeof(ProductionRule) * ruleCount);
+    if (bakery->cumulativeProb == NULL) exit(1);
 
     // Insert the data into the array
     bakery->cumulativeProb[0] = distribution[0];

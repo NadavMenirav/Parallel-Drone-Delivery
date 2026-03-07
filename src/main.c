@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 void produceBread(Bakery* bakeries, int bakeryCount);
+void updateDrones(Drone* drones, int droneCount, int currentRound);
 
 // This function works in parallel, and is called at the start of every round. It produces the bread for the bakeries
 void produceBread(Bakery* bakeries, const int bakeryCount) {
@@ -44,5 +45,21 @@ void produceBread(Bakery* bakeries, const int bakeryCount) {
 
         // We cannot exceed the capacity
         bakeries[i].inventory = (newInventory < bakeries[i].capacity) ? newInventory : bakeries[i].capacity;
+    }
+}
+
+// This function is called at the end of stage 1, and it updates the position and availability of the drones
+void updateDrones(Drone* drones, const int droneCount, const int currentRound) {
+
+    // Iterating over the drones array and finding newly available drones
+    #pragma omp parallel for default(none) shared(drones, droneCount, currentRound)
+    for (int i = 0; i < droneCount; i++) {
+        Drone* drone = &drones[i]; // Current drone
+
+        // If the current drone is now available, we set the current customer he serves to NULL
+        if (drone->availableAtRound <= currentRound) {
+            drone->availableAtRound = currentRound;
+            drone->currentCustomer = NULL;
+        }
     }
 }

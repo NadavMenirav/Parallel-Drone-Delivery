@@ -27,7 +27,7 @@ int* buildIdToRowMap(Customer* customers, int customerCount, int maxId);
 void freeDistanceMatrix(double** matrix, int customerCount);
 
 // Processes customers who have been served, deciding if they leave or order again
-void processCustomerTransitions(Customer* customers, int customerCount);
+void processCustomerTransitions(Customer* customers, int customerCount,int currentRound);
 
 // Comparison function for qsort to sort customers in descending order based on their tempScore
 int compareCustomersDesc(const void* a, const void* b);

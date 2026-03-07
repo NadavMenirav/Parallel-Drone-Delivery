@@ -97,17 +97,17 @@ void freeDistanceMatrix(double** matrix, int customerCount) {
 }
 
 // Processes customers who have been served, deciding if they leave or order again
-void processCustomerTransitions(Customer* customers, int customerCount) {
+void processCustomerTransitions(Customer* customers, int customerCount,int currentRound) {
     
     // Parallel loop over all customers
-    #pragma omp parallel for default(none) shared(customers, customerCount)
+    #pragma omp parallel for default(none) shared(customers, customerCount, currentRound)
     for (int i = 0; i < customerCount; i++) {
         
         // Only process customers who just received their bread
         if (customers[i].status == CUSTOMER_SERVED) {
             
             // Create a unique, thread-safe seed using the current time, thread ID, and customer ID
-            unsigned int local_seed = (unsigned int)time(NULL) ^ omp_get_thread_num() ^ customers[i].id;
+           unsigned int local_seed = (unsigned int)time(NULL) ^ omp_get_thread_num() ^ customers[i].id ^ (unsigned int)currentRound;
 
             // Generate a random double between 0.0 and 1.0 using the POSIX rand_r function
             int randomInteger = rand_r(&local_seed);

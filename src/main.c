@@ -183,17 +183,17 @@ void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCoun
     typedef struct { double x, y, velocity; int capacity; } DroneDef;
     DroneDef dDefs[] = {
         // Base A drones (north-west)
-        {  20.0,  50.0, 300.0, 4 },   // D1:  fast, small
-        {  20.0,  50.0, 100, 8 },   // D2:  slow, large
-        {  25.0,  55.0, 200.5, 5 },   // D3:  balanced
-        {  15.0,  45.0, 95.0, 3 },   // D4:  very fast, tiny
-        {  20.0,  50.0, 121.0, 6 },   // D5:  medium
+        {  20.0,  50.0, 3.0, 4 },   // D1:  fast, small
+        {  20.0,  50.0, 8.0, 8 },   // D2:  slow, large
+        {  25.0,  55.0, 2.5, 5 },   // D3:  balanced
+        {  15.0,  45.0, 5.0, 3 },   // D4:  very fast, tiny
+        {  20.0,  50.0, 11.0, 6 },   // D5:  medium
         // Base B drones (south-east)
-        { 160.0, 160.0, 300.5, 3 },   // D6:  fast, small
-        { 160.0, 160.0, 100.8, 7 },   // D7:  slow, large
-        { 155.0, 165.0, 200.2, 6 },   // D8:  balanced
-        { 165.0, 155.0, 70.8, 4 },   // D9:  medium-fast
-        { 160.0, 160.0, 50.2, 10 },  // D10: slowest, biggest
+        { 160.0, 160.0, 3.5, 3 },   // D6:  fast, small
+        { 160.0, 160.0, 1.8, 7 },   // D7:  slow, large
+        { 155.0, 165.0, 2.2, 6 },   // D8:  balanced
+        { 165.0, 155.0, 7.8, 4 },   // D9:  medium-fast
+        { 160.0, 160.0, 5.2, 10 },  // D10: slowest, biggest
     };
 
     for (int i = 0; i < *dCount; i++) {
@@ -394,7 +394,7 @@ int main() {
 
         // Stage 4: Transitions
         updateCustomerPriorities(customers, cCount);
-        processCustomerTransitions(customers, cCount);
+        processCustomerTransitions(customers, cCount, t);
         printCustomerSummary(customers, cCount);
 
         // Check if all customers have departed

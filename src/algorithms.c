@@ -117,7 +117,7 @@ void processCustomerTransitions(Customer* customers, int customerCount) {
                 int newDemand = (rand_r(&local_seed) % 5) + 1;
                 customers[i].demand = newDemand;
                 
-                // Reset priority for the new order
+                // Reset priority for the new  order
                 customers[i].priority = 1;
             }
         }

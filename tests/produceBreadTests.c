@@ -3,6 +3,13 @@
 #include <assert.h>
 #include "../include/entities.h"
 
+// We include the main.c file to get access to the produceBread function, which is currently defined there.
+// We use a preprocessor trick to rename the main function in main.c to something else, so that we can call it from our test.
+//We done that becasue I created a test folder and I want to be able to run the tests without running the main simulation, which is defined in main.c
+#define main disabled_original_main
+#include "../src/main.c"
+#undef main
+
 // Explicit declaration since the function is currently inside main.c
 void produceBread(Bakery* bakeries, int bakeryCount);
 

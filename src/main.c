@@ -3,8 +3,11 @@
 #include <omp.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 
 void produceBread(Bakery* bakeries, int bakeryCount);
+void updateDrones(Drone* drones, int droneCount, int currentRound);
+void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer** customers, int* cCount);
 
 // This function works in parallel, and is called at the start of every round. It produces the bread for the bakeries
 void produceBread(Bakery* bakeries, const int bakeryCount) {
@@ -45,4 +48,105 @@ void produceBread(Bakery* bakeries, const int bakeryCount) {
         // We cannot exceed the capacity
         bakeries[i].inventory = (newInventory < bakeries[i].capacity) ? newInventory : bakeries[i].capacity;
     }
+}
+
+// This function is called at the end of stage 1, and it updates the position and availability of the drones
+void updateDrones(Drone* drones, const int droneCount, const int currentRound) {
+
+    // Iterating over the drones array and finding newly available drones
+    #pragma omp parallel for default(none) shared(drones, droneCount, currentRound)
+    for (int i = 0; i < droneCount; i++) {
+        Drone* drone = &drones[i]; // Current drone
+
+        // If the current drone is now available, we set the current customer he serves to NULL
+        if (drone->availableAtRound <= currentRound) {
+            drone->availableAtRound = currentRound;
+            drone->currentCustomer = NULL;
+        }
+    }
+}
+
+// This function is a helper function that for checks, used to mock a city (bakeries, drones, customers, etc.)
+void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer** customers, int* cCount) {
+
+    // 1 bakery, 2 drones, 2 customers
+    *bCount = 1;
+    *dCount = 2;
+    *cCount = 2;
+
+    // Allocate the memory
+    *bakeries = (Bakery*) malloc(sizeof(Bakery) * (*bCount));
+    *drones = (Drone*) malloc(sizeof(Drone) * (*dCount));
+    *customers = (Customer*) malloc(sizeof(Customer) * (*cCount));
+
+    // Made-up bakery stats
+    (*bakeries)[0].id = 1;
+    (*bakeries)[0].inventory = 0;
+    (*bakeries)[0].capacity = 100;
+    (*bakeries)[0].seed = 42;
+    (*bakeries)[0].ruleCount = 1;
+    (*bakeries)[0].cumulativeProb = (ProductionRule*)malloc(sizeof(ProductionRule));
+    (*bakeries)[0].cumulativeProb[0].probability = 1.0;
+    (*bakeries)[0].cumulativeProb[0].breadCount = 10;
+
+    // Made-up drones stats
+    for(int i = 0; i < *dCount; i++) {
+        (*drones)[i].id = i + 1;
+        (*drones)[i].availableAtRound = 0;
+        (*drones)[i].currentCustomer = NULL;
+    }
+
+    // Made-up customer-stats
+    for(int i = 0; i < *cCount; i++) {
+        (*customers)[i].id = i + 1;
+        (*customers)[i].priority = 1;
+        (*customers)[i].status = CUSTOMER_ACTIVE;
+        (*customers)[i].demand = 5;
+    }
+}
+
+
+int main() {
+
+    // Creating the mocked system
+    Bakery* bakeries;
+    Drone* drones;
+    Customer* customers;
+
+    int bCount;
+    int dCount;
+    int cCount;
+
+    initSystemMock(&bakeries, &bCount, &drones, &dCount, &customers, &cCount);
+
+    int t = 1; // the current round
+
+    // This while function simulates the entire delivery system. Each iteration is a different round.
+    while (t < 10) {
+
+        // Prints to decorate the round
+        printf("\n=== Round %d ===\n", t);
+
+        /*
+         * Stage 1 - State update
+         * The bakeries increase their stock by their production rate
+         */
+        produceBread(bakeries, bCount);
+        printf("Bakery %d inventory after production: %d\n", bakeries[0].id, bakeries[0].inventory);
+
+        // Now, drones update their position and availability after previous deliveries
+        updateDrones(drones, dCount, t);
+        printf("Drone %d available at round: %d\n", drones[0].id, drones[0].availableAtRound);
+        printf("Drone %d available at round: %d\n", drones[1].id, drones[1].availableAtRound);
+
+        // ToDo: stages 2, 3, 4
+
+        t++;
+    }
+
+
+    free(bakeries[0].cumulativeProb);
+    free(bakeries);
+    free(drones);
+    free(customers);
 }

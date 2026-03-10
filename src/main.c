@@ -325,6 +325,7 @@ int main() {
     int bCount, dCount, cCount;
 
     initSystemStress(&bakeries, &bCount, &drones, &dCount, &customers, &cCount);
+    //initSystemMock(&bakeries, &bCount, &drones, &dCount, &customers, &cCount);
 
     printf("=== Drone Bakery Delivery — Stress Test ===\n");
     printf("Config: %d bakeries, %d drones, %d customers, 50 rounds\n\n", bCount, dCount, cCount);

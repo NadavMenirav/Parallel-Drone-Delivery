@@ -24,14 +24,14 @@ double calculateFlightTime(double distance, double velocity) {
     return distance / velocity;
 }
 
-void updateCustomerPriorities(Customer* customers, int customerCount) {
+void updateCustomerPriorities(Customer** customers, int customerCount) {
     //parallelize the loop to update customer priorities using OpenMP
     #pragma omp parallel for
     for (int i = 0; i < customerCount; i++) {
         // Check if the customer is still waiting for their order
-        if (customers[i].status == CUSTOMER_ACTIVE) { 
+        if (customers[i]->status == CUSTOMER_ACTIVE) { 
             // Increment the priority of the customer by 1 for each round they are not served
-            customers[i].priority += 1;
+            customers[i]->priority += 1;
         }
     }
 }

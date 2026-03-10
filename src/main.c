@@ -9,8 +9,8 @@
 
 void produceBread(Bakery* bakeries, int bakeryCount);
 void updateDrones(Drone* drones, int droneCount, int currentRound);
-void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer** customers, int* cCount);
-void findClosestBakery(Bakery* bakeries, int bCount, Customer* customers, int cCount, double** distanceMatrix);
+void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount);
+void findClosestBakery(Bakery* bakeries, int bCount, Customer** customers, int cCount, double** distanceMatrix);
 
 // This function works in parallel, and is called at the start of every round. It produces the bread for the bakeries
 void produceBread(Bakery* bakeries, const int bakeryCount) {
@@ -65,12 +65,13 @@ void updateDrones(Drone* drones, const int droneCount, const int currentRound) {
         if (drone->availableAtRound <= currentRound) {
             drone->availableAtRound = currentRound;
             drone->currentCustomer = NULL;
+            drone->load = 0; // The drone has delivered its bread, so it is now empty
         }
     }
 }
 
 // This function is a helper function that for checks, used to mock a city (bakeries, drones, customers, etc.)
-void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer** customers, int* cCount) {
+void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount) {
 
     // 1 bakery, 2 drones, 2 customers
     *bCount = 1;
@@ -80,7 +81,9 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
     // Allocate the memory
     *bakeries = (Bakery*) malloc(sizeof(Bakery) * (*bCount));
     *drones = (Drone*) malloc(sizeof(Drone) * (*dCount));
-    *customers = (Customer*) malloc(sizeof(Customer) * (*cCount));
+    
+    // Allocate pointer array for customers
+    *customers = (Customer**) malloc(sizeof(Customer*) * (*cCount));
 
     if (*bakeries == NULL || *drones == NULL || *customers == NULL) exit(1);
 
@@ -112,15 +115,18 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
 
     // Made-up customer-stats
     for(int i = 0; i < *cCount; i++) {
-        (*customers)[i].id = i + 1;
-        (*customers)[i].pos.x = (double)(i + 1) * 10.0;
-        (*customers)[i].pos.y = 0.0;
-        (*customers)[i].priority = 1;
-        (*customers)[i].status = CUSTOMER_ACTIVE;
-        (*customers)[i].demand = 5;
-        (*customers)[i].closestBakeryDistance = DBL_MAX;
-        (*customers)[i].tempScore = -1.0;
-        (*customers)[i].distanceMatrixRow = -1; // Will be set by calculateDistanceMatrix()
+        (*customers)[i] = (Customer*) malloc(sizeof(Customer));
+        if ((*customers)[i] == NULL) exit(1);
+        
+        (*customers)[i]->id = i + 1;
+        (*customers)[i]->pos.x = (double)(i + 1) * 10.0;
+        (*customers)[i]->pos.y = 0.0;
+        (*customers)[i]->priority = 1;
+        (*customers)[i]->status = CUSTOMER_ACTIVE;
+        (*customers)[i]->demand = 5;
+        (*customers)[i]->closestBakeryDistance = DBL_MAX;
+        (*customers)[i]->tempScore = -1.0;
+        (*customers)[i]->distanceMatrixRow = -1; // Will be set by calculateDistanceMatrix()
     }
 }
 
@@ -132,7 +138,7 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
  *
  * Positions are spread across a 200x200 coordinate space.
  */
-void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer** customers, int* cCount) {
+void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount) {
 
     *bCount = 5;
     *dCount = 10;
@@ -140,7 +146,7 @@ void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCoun
 
     *bakeries = (Bakery*) malloc(sizeof(Bakery) * (*bCount));
     *drones   = (Drone*)  malloc(sizeof(Drone)  * (*dCount));
-    *customers = (Customer*) malloc(sizeof(Customer) * (*cCount));
+    *customers = (Customer**) malloc(sizeof(Customer*) * (*cCount));
     if (*bakeries == NULL || *drones == NULL || *customers == NULL) exit(1);
 
     // ── Bakeries ──
@@ -242,21 +248,24 @@ void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCoun
     };
 
     for (int i = 0; i < *cCount; i++) {
-        (*customers)[i].id = i + 1;
-        (*customers)[i].pos.x = cDefs[i].x;
-        (*customers)[i].pos.y = cDefs[i].y;
-        (*customers)[i].priority = 1;
-        (*customers)[i].status = CUSTOMER_ACTIVE;
-        (*customers)[i].demand = cDefs[i].demand;
-        (*customers)[i].closestBakeryDistance = DBL_MAX;
-        (*customers)[i].tempScore = -1.0;
-        (*customers)[i].distanceMatrixRow = -1;
+        (*customers)[i] = (Customer*) malloc(sizeof(Customer));
+        if ((*customers)[i] == NULL) exit(1);
+
+        (*customers)[i]->id = i + 1;
+        (*customers)[i]->pos.x = cDefs[i].x;
+        (*customers)[i]->pos.y = cDefs[i].y;
+        (*customers)[i]->priority = 1;
+        (*customers)[i]->status = CUSTOMER_ACTIVE;
+        (*customers)[i]->demand = cDefs[i].demand;
+        (*customers)[i]->closestBakeryDistance = DBL_MAX;
+        (*customers)[i]->tempScore = -1.0;
+        (*customers)[i]->distanceMatrixRow = -1;
     }
 }
 
 // This function computes the closest bakery to every customer.
 // Uses each customer's distanceMatrixRow field for correct matrix lookup after sorting.
-void findClosestBakery(Bakery* bakeries, const int bCount, Customer* customers, const int cCount,
+void findClosestBakery(Bakery* bakeries, const int bCount, Customer** customers, const int cCount,
     double** distanceMatrix) {
 
     /*
@@ -267,14 +276,14 @@ void findClosestBakery(Bakery* bakeries, const int bCount, Customer* customers, 
     for (int i = 0; i < cCount; i++) {
 
         // Double-checking in case the field is not initialized
-        customers[i].closestBakeryDistance = DBL_MAX;
+        customers[i]->closestBakeryDistance = DBL_MAX;
 
         // Use stable row index instead of current array position
-        int matrixRow = customers[i].distanceMatrixRow;
+        int matrixRow = customers[i]->distanceMatrixRow;
 
         for (int j = 0; j < bCount; j++) {
-            if (distanceMatrix[matrixRow][j] < customers[i].closestBakeryDistance) {
-                customers[i].closestBakeryDistance = distanceMatrix[matrixRow][j];
+            if (distanceMatrix[matrixRow][j] < customers[i]->closestBakeryDistance) {
+                customers[i]->closestBakeryDistance = distanceMatrix[matrixRow][j];
             }
         }
     }
@@ -299,16 +308,16 @@ void printDroneStatus(Drone* drones, int dCount, int currentRound) {
     printf("  Drones: %d idle, %d delivering\n", idle, busy);
 }
 
-void printCustomerSummary(Customer* customers, int cCount) {
+void printCustomerSummary(Customer** customers, int cCount) {
     int active = 0, served = 0, departed = 0;
     int totalDemand = 0, totalPriority = 0;
     for (int i = 0; i < cCount; i++) {
-        if (customers[i].status == CUSTOMER_ACTIVE) {
+        if (customers[i]->status == CUSTOMER_ACTIVE) {
             active++;
-            totalDemand += customers[i].demand;
-            totalPriority += customers[i].priority;
+            totalDemand += customers[i]->demand;
+            totalPriority += customers[i]->priority;
         }
-        else if (customers[i].status == CUSTOMER_SERVED) served++;
+        else if (customers[i]->status == CUSTOMER_SERVED) served++;
         else departed++;
     }
     printf("  Customers: %d active (demand=%d, avg_priority=%.1f), %d served, %d departed\n",
@@ -321,7 +330,7 @@ int main() {
 
     Bakery* bakeries;
     Drone* drones;
-    Customer* customers;
+    Customer** customers;
     int bCount, dCount, cCount;
 
     initSystemStress(&bakeries, &bCount, &drones, &dCount, &customers, &cCount);
@@ -361,14 +370,14 @@ int main() {
         double avgVelocity = 0.0, avgCapacity = 0.0;
         calculateDroneAverages(drones, dCount, &avgVelocity, &avgCapacity);
         calculateCustomerScoresStage2(customers, cCount, avgVelocity, avgCapacity);
-        qsort(customers, cCount, sizeof(Customer), compareCustomersDesc);
+        qsort(customers, cCount, sizeof(Customer*), compareCustomersDesc);
 
         // Print top 3 customers by score
         printf("  Top scores: ");
         int shown = 0;
         for (int i = 0; i < cCount && shown < 3; i++) {
-            if (customers[i].tempScore > 0) {
-                printf("C%d=%.2f  ", customers[i].id, customers[i].tempScore);
+            if (customers[i]->tempScore > 0) {
+                printf("C%d=%.2f  ", customers[i]->id, customers[i]->tempScore);
                 shown++;
             }
         }
@@ -401,7 +410,7 @@ int main() {
         // Check if all customers have departed
         int allDeparted = 1;
         for (int i = 0; i < cCount; i++) {
-            if (customers[i].status != CUSTOMER_DEPARTED) {
+            if (customers[i]->status != CUSTOMER_DEPARTED) {
                 allDeparted = 0;
                 break;
             }
@@ -430,8 +439,8 @@ int main() {
 
     int finalActive = 0, finalDeparted = 0;
     for (int i = 0; i < cCount; i++) {
-        if (customers[i].status == CUSTOMER_ACTIVE) finalActive++;
-        else if (customers[i].status == CUSTOMER_DEPARTED) finalDeparted++;
+        if (customers[i]->status == CUSTOMER_ACTIVE) finalActive++;
+        else if (customers[i]->status == CUSTOMER_DEPARTED) finalDeparted++;
     }
     printf("    Active:   %d\n", finalActive);
     printf("    Departed: %d\n", finalDeparted);
@@ -447,5 +456,11 @@ int main() {
     for (int i = 0; i < bCount; i++) free(bakeries[i].cumulativeProb);
     free(bakeries);
     free(drones);
+    for (int i = 0; i < cCount; i++) {
+        free(customers[i]);
+    }
+    // Free the array of pointers
     free(customers);
-}
+
+        return 0;
+    }

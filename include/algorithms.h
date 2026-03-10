@@ -12,13 +12,13 @@ double calculateDistance(Position p1, Position p2);
 double calculateFlightTime(double distance, double velocity);
 
 // Update the priorities of customers based on whether they have been served or not
-void updateCustomerPriorities(Customer* customers, int customerCount);
+void updateCustomerPriorities(Customer** customers, int customerCount);
 
 // Calculates the priority-aware optimization score for a customer-drone assignment
 double calculateCustomerScore(int priority, double estimatedTime);
 
 // Creates and computes a 2D distance matrix [Customer][Bakery] in parallel
-double** calculateDistanceMatrix(Bakery* bakeries, int bakeryCount, Customer* customers, int customerCount);
+double** calculateDistanceMatrix(Bakery* bakeries, int bakeryCount, Customer** customers, int customerCount);
 
 // Builds a mapping from customer ID to their original row index in the distance matrix
 int* buildIdToRowMap(Customer* customers, int customerCount, int maxId);
@@ -27,7 +27,7 @@ int* buildIdToRowMap(Customer* customers, int customerCount, int maxId);
 void freeDistanceMatrix(double** matrix, int customerCount);
 
 // Processes customers who have been served, deciding if they leave or order again
-void processCustomerTransitions(Customer* customers, int customerCount,int currentRound);
+void processCustomerTransitions(Customer** customers, int customerCount,int currentRound);
 
 // Comparison function for qsort to sort customers in descending order based on their tempScore
 int compareCustomersDesc(const void* a, const void* b);
@@ -36,9 +36,9 @@ int compareCustomersDesc(const void* a, const void* b);
 void calculateDroneAverages(Drone* drones, int droneCount, double* avgVelocity, double* avgCapacity);
 
 // Calculates the heuristic score for each active customer and stores it in their tempScore field.
-void calculateCustomerScoresStage2(Customer* customers, int cCount, double avgVelocity, double avgCapacity);
+void calculateCustomerScoresStage2(Customer** customers, int cCount, double avgVelocity, double avgCapacity);
 
 // Assigns drones to customers, planning the route and updating inventory
-void assignDronesStage3(Customer* customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, double** distanceMatrix, int currentRound);
+void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, double** distanceMatrix, int currentRound);
 
 #endif

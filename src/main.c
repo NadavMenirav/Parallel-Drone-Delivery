@@ -11,6 +11,7 @@ void produceBread(Bakery* bakeries, int bakeryCount);
 void updateDrones(Drone* drones, int droneCount, int currentRound);
 void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer** customers, int* cCount);
 void findClosestBakery(Bakery* bakeries, int bCount, Customer* customers, int cCount, double** distanceMatrix);
+Bakery* closestBakeryToDrone(Bakery* bakeries, int bakeryCount, Drone* drone);
 
 // This function works in parallel, and is called at the start of every round. It produces the bread for the bakeries
 void produceBread(Bakery* bakeries, const int bakeryCount) {
@@ -61,12 +62,37 @@ void updateDrones(Drone* drones, const int droneCount, const int currentRound) {
     for (int i = 0; i < droneCount; i++) {
         Drone* drone = &drones[i]; // Current drone
 
-        // If the current drone is now available, we set the current customer he serves to NULL
+        /*
+         * If the current drone is now available, we set the current customer he serves to NULL and we bring the drone
+         * closer to a bakery!
+         */
         if (drone->availableAtRound <= currentRound) {
             drone->availableAtRound = currentRound;
             drone->currentCustomer = NULL;
         }
     }
+}
+
+/*
+ * This function receives a drone pointer and sets returns a pointer to the closest bakery to it, in order to get this
+ * drone closer to it while having no customer to serve
+ */
+Bakery* closestBakeryToDrone(Bakery* bakeries, const int bakeryCount, Drone* drone) {
+    double closestDistance = DBL_MAX, currentDistance = DBL_MAX;
+    Bakery* closestBakery = NULL, *currentBakery = NULL;
+
+    // This loop will be performed sequentially because we already paralleled the outer loop in update drones
+    for (int i = 0; i < bakeryCount; i++) {
+        currentBakery = &bakeries[i];
+
+        currentDistance = calculateDistance(currentBakery->pos, drone->pos);
+        if (currentDistance < closestDistance) {
+            closestDistance = currentDistance;
+            closestBakery = currentBakery;
+        }
+    }
+
+    return closestBakery;
 }
 
 // This function is a helper function that for checks, used to mock a city (bakeries, drones, customers, etc.)

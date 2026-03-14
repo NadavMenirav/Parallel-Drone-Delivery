@@ -11,7 +11,7 @@ void produceBread(Bakery* bakeries, int bakeryCount);
 void updateDrones(Drone* drones, int droneCount, int currentRound, Bakery* bakeries, int bakeryCount);
 void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount);
 void findClosestBakery(Bakery* bakeries, int bCount, Customer** customers, int cCount, double** distanceMatrix);
-Bakery* closestBakeryToDrone(Bakery* bakeries, int bakeryCount, Drone* drone);
+Bakery* closestBakeryToDrone(Bakery* bakeries, int bakeryCount, const Drone* drone, double* closestDistance);
 void idleDroneRepositioning(Bakery* bakeries, int bakeryCount, Drone* drone);
 
 // This function works in parallel, and is called at the start of every round. It produces the bread for the bakeries
@@ -81,8 +81,8 @@ void updateDrones(Drone* drones, const int droneCount, const int currentRound, B
  * This function receives a drone pointer and sets returns a pointer to the closest bakery to it, in order to get this
  * drone closer to it while having no customer to serve
  */
-Bakery* closestBakeryToDrone(Bakery* bakeries, const int bakeryCount, Drone* drone) {
-    double closestDistance = DBL_MAX, currentDistance = DBL_MAX;
+Bakery* closestBakeryToDrone(Bakery* bakeries, const int bakeryCount, const Drone* drone, double* closestDistance) {
+    double closest = DBL_MAX, currentDistance = DBL_MAX;
     Bakery* closestBakery = NULL, *currentBakery = NULL;
 
     // This loop will be performed sequentially because we already paralleled the outer loop in update drones
@@ -90,11 +90,13 @@ Bakery* closestBakeryToDrone(Bakery* bakeries, const int bakeryCount, Drone* dro
         currentBakery = &bakeries[i];
 
         currentDistance = calculateDistance(currentBakery->pos, drone->pos);
-        if (currentDistance < closestDistance) {
-            closestDistance = currentDistance;
+        if (currentDistance < closest) {
+            closest = currentDistance;
             closestBakery = currentBakery;
         }
     }
+
+    if (closestDistance) *closestDistance = closest;
 
     return closestBakery;
 }
@@ -103,12 +105,10 @@ Bakery* closestBakeryToDrone(Bakery* bakeries, const int bakeryCount, Drone* dro
 void idleDroneRepositioning(Bakery* bakeries, const int bakeryCount, Drone* drone) {
 
     // First we find the closest bakery and the distance to it
-    const Bakery* closestBakery = closestBakeryToDrone(bakeries, bakeryCount, drone);
-    if (closestBakery == NULL) return;
+    double closestDistance = 0.0;
 
-    const double closestDistance = calculateDistance(closestBakery->pos, drone->pos);
-
-    if (closestDistance <= 0) return;
+    const Bakery* closestBakery = closestBakeryToDrone(bakeries, bakeryCount, drone, &closestDistance);
+    if (closestBakery == NULL || closestDistance < 0) return;
 
     // How much should the drone move (percentage wise) in the direction of the bakery
     double ratio = drone->velocity / closestDistance;

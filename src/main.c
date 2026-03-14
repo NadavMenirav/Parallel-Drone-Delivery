@@ -8,9 +8,11 @@
 #include <float.h>
 
 void produceBread(Bakery* bakeries, int bakeryCount);
-void updateDrones(Drone* drones, int droneCount, int currentRound);
+void updateDrones(Drone* drones, int droneCount, int currentRound, Bakery* bakeries, int bakeryCount);
 void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount);
 void findClosestBakery(Bakery* bakeries, int bCount, Customer** customers, int cCount, double** distanceMatrix);
+Bakery* closestBakeryToDrone(Bakery* bakeries, int bakeryCount, Drone* drone);
+void idleDroneRepositioning(Bakery* bakeries, int bakeryCount, Drone* drone);
 
 // This function works in parallel, and is called at the start of every round. It produces the bread for the bakeries
 void produceBread(Bakery* bakeries, const int bakeryCount) {
@@ -54,20 +56,73 @@ void produceBread(Bakery* bakeries, const int bakeryCount) {
 }
 
 // This function is called at the end of stage 1, and it updates the position and availability of the drones
-void updateDrones(Drone* drones, const int droneCount, const int currentRound) {
+void updateDrones(Drone* drones, const int droneCount, const int currentRound, Bakery* bakeries,
+    const int bakeryCount) {
 
     // Iterating over the drones array and finding newly available drones
-    #pragma omp parallel for default(none) shared(drones, droneCount, currentRound)
+    #pragma omp parallel for default(none) shared(drones, droneCount, currentRound, bakeries, bakeryCount)
     for (int i = 0; i < droneCount; i++) {
         Drone* drone = &drones[i]; // Current drone
 
-        // If the current drone is now available, we set the current customer he serves to NULL
+        /*
+         * If the current drone is now available, we set the current customer he serves to NULL and we bring the drone
+         * closer to a bakery!
+         */
         if (drone->availableAtRound <= currentRound) {
             drone->availableAtRound = currentRound;
             drone->currentCustomer = NULL;
-            drone->load = 0; // The drone has delivered its bread, so it is now empty
+            drone->load = 0;
+            idleDroneRepositioning(bakeries, bakeryCount, drone);
         }
     }
+}
+
+/*
+ * This function receives a drone pointer and sets returns a pointer to the closest bakery to it, in order to get this
+ * drone closer to it while having no customer to serve
+ */
+Bakery* closestBakeryToDrone(Bakery* bakeries, const int bakeryCount, Drone* drone) {
+    double closestDistance = DBL_MAX, currentDistance = DBL_MAX;
+    Bakery* closestBakery = NULL, *currentBakery = NULL;
+
+    // This loop will be performed sequentially because we already paralleled the outer loop in update drones
+    for (int i = 0; i < bakeryCount; i++) {
+        currentBakery = &bakeries[i];
+
+        currentDistance = calculateDistance(currentBakery->pos, drone->pos);
+        if (currentDistance < closestDistance) {
+            closestDistance = currentDistance;
+            closestBakery = currentBakery;
+        }
+    }
+
+    return closestBakery;
+}
+
+// This function receives an idle drone and shall get this drone one step closer to its closest bakery
+void idleDroneRepositioning(Bakery* bakeries, const int bakeryCount, Drone* drone) {
+
+    // First we find the closest bakery and the distance to it
+    const Bakery* closestBakery = closestBakeryToDrone(bakeries, bakeryCount, drone);
+    if (closestBakery == NULL) return;
+
+    const double closestDistance = calculateDistance(closestBakery->pos, drone->pos);
+
+    if (closestDistance <= 0) return;
+
+    // How much should the drone move (percentage wise) in the direction of the bakery
+    double ratio = drone->velocity / closestDistance;
+
+    // We don't want the drone to pass the bakery
+    ratio = ratio <=1 ? ratio : 1;
+
+    // The difference in the x and y components
+    const double dx = closestBakery->pos.x - drone->pos.x;
+    const double dy = closestBakery->pos.y - drone->pos.y;
+
+    // Updating the drone position
+    drone->pos.x += dx * ratio;
+    drone->pos.y += dy * ratio;
 }
 
 // This function is a helper function that for checks, used to mock a city (bakeries, drones, customers, etc.)
@@ -81,7 +136,7 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
     // Allocate the memory
     *bakeries = (Bakery*) malloc(sizeof(Bakery) * (*bCount));
     *drones = (Drone*) malloc(sizeof(Drone) * (*dCount));
-    
+
     // Allocate pointer array for customers
     *customers = (Customer**) malloc(sizeof(Customer*) * (*cCount));
 
@@ -117,7 +172,7 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
     for(int i = 0; i < *cCount; i++) {
         (*customers)[i] = (Customer*) malloc(sizeof(Customer));
         if ((*customers)[i] == NULL) exit(1);
-        
+
         (*customers)[i]->id = i + 1;
         (*customers)[i]->pos.x = (double)(i + 1) * 10.0;
         (*customers)[i]->pos.y = 0.0;
@@ -361,8 +416,9 @@ int main() {
         printf("── Round %d ──\n", t);
 
         // Stage 1: Production & drone updates
+// Stage 1: Production & drone updates
         produceBread(bakeries, bCount);
-        updateDrones(drones, dCount, t);
+        updateDrones(drones, dCount, t, bakeries, bCount);
         printBakeryStatus(bakeries, bCount);
         printDroneStatus(drones, dCount, t);
 
@@ -384,7 +440,6 @@ int main() {
         printf("\n");
 
         // Stage 3: Drone assignment
-        // Count bread before and after to track deliveries
         int breadBefore = 0;
         for (int i = 0; i < bCount; i++) breadBefore += bakeries[i].inventory;
 

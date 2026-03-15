@@ -295,3 +295,59 @@ void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int 
     for (int d = 0; d < dCount; d++) free(droneBakeryDist[d]);
     free(droneBakeryDist);
 }
+
+void parallelQuickSort(Customer** arr, int left, int right) {
+    if (left >= right) return;
+
+    // Threshold: For small arrays, the overhead of thread creation is slower than the sorting itself.
+    // Therefore, we fall back to sequential quicksort. 1000 is an excellent magic number for performance.
+    if (right - left < 1000) {
+        qsort(arr + left, right - left + 1, sizeof(Customer*), compareCustomersDesc);
+        return;
+    }
+
+    int i = left, j = right;
+    
+    // Pivot selection (the score of the middle element)
+    double pivotScore = arr[left + (right - left) / 2]->tempScore;
+
+    // Partitioning process (sorting in descending order: high scores to the left, low scores to the right)
+    while (i <= j) {
+        while (arr[i]->tempScore > pivotScore) i++;
+        while (arr[j]->tempScore < pivotScore) j--;
+        
+        if (i <= j) {
+            // Swap the pointers
+            Customer* temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+            i++;
+            j--;
+        }
+    }
+
+    // Split tasks to other threads (Divide and Conquer)
+    #pragma omp task shared(arr)
+    if (left < j) {
+        parallelQuickSort(arr, left, j);
+    }
+
+    #pragma omp task shared(arr)
+    if (i < right) {
+        parallelQuickSort(arr, i, right);
+    }
+}
+
+// Wrapper function that is called from the outside
+void sortCustomersParallel(Customer** customers, int count) {
+    // Open a parallel region that creates the Thread Pool
+    #pragma omp parallel default(none) shared(customers, count)
+    {
+        // Define that only one thread (single) starts the initial recursion.
+        // This thread will generate Tasks, and the other waiting cores will fetch them and start helping.
+        #pragma omp single nowait
+        {
+            parallelQuickSort(customers, 0, count - 1);
+        }
+    }
+}

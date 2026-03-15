@@ -71,7 +71,7 @@ double** calculateDistanceMatrix(Bakery* bakeries, int bakeryCount, Customer** c
 
     // Step 3: Compute the distances in parallel and tag each customer with its stable row index.
     // We parallelize the outer loop, meaning different threads will handle different customers.
-    #pragma omp parallel for default(none) shared(matrix, customers, customerCount, bakeries, bakeryCount)
+    #pragma omp parallel for default(none) shared(matrix, customers, customerCount, bakeries, bakeryCount) schedule(dynamic)
     for (int i = 0; i < customerCount; i++) {
         customers[i]->distanceMatrixRow = i;
         for (int j = 0; j < bakeryCount; j++) {
@@ -161,7 +161,7 @@ void calculateDroneAverages(Drone* drones, int droneCount, double* avgVelocity, 
 // --- Stage 2: Calculate and Sort ---
 // Calculates the heuristic score for each active customer and stores it in their tempScore field.
 void calculateCustomerScoresStage2(Customer** customers, int cCount, double avgVelocity, double avgCapacity) {
-    #pragma omp parallel for default(none) shared(customers, cCount, avgVelocity, avgCapacity)
+    #pragma omp parallel for default(none) shared(customers, cCount, avgVelocity, avgCapacity) schedule(dynamic)
     for (int i = 0; i < cCount; i++) {
         if (customers[i]->status != CUSTOMER_ACTIVE) {
             customers[i]->tempScore = -1.0;
@@ -190,7 +190,7 @@ typedef struct {
 // Assigns drones to customers, planning the route and updating inventory.
 void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, double** distanceMatrix, int currentRound) {
     
-    // Step 1: Pre-compute drone-to-bakery distances to save expensive sqrt calculations inside the loop
+    // Pre-compute distances
     double** droneBakeryDist = malloc(dCount * sizeof(double*));
     if (droneBakeryDist == NULL) exit(1);
     for (int d = 0; d < dCount; d++) {
@@ -204,41 +204,38 @@ void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int 
     Proposal* proposals = malloc(cCount * sizeof(Proposal));
     if (proposals == NULL) exit(1);
 
+    // ==========================================
+    // INITIALIZE ALL LOCKS (Drones, Bakeries, Customers)
+    // ==========================================
+    omp_lock_t* drone_locks = malloc(dCount * sizeof(omp_lock_t));
+    omp_lock_t* bakery_locks = malloc(bCount * sizeof(omp_lock_t));
+    omp_lock_t* customer_locks = malloc(cCount * sizeof(omp_lock_t));
+    
+    for (int d = 0; d < dCount; d++) omp_init_lock(&drone_locks[d]);
+    for (int b = 0; b < bCount; b++) omp_init_lock(&bakery_locks[b]);
+    for (int c = 0; c < cCount; c++) omp_init_lock(&customer_locks[c]);
+
     int matchMade = 1; 
 
-    // Loop until no more matches can be made (Handles order splitting natively!)
     while (matchMade) {
         matchMade = 0; 
 
-        // --- Phase 1: Parallel Search ---
-        //
-        // SYNCHRONIZATION NOTE: This parallel region reads drones[d].currentCustomer and
-        // bakeries[b].inventory, which are modified in the sequential Phase 2 below.
-        // This is safe because the implicit barrier at the end of #pragma omp parallel for
-        // guarantees all threads complete Phase 1 before any thread enters Phase 2.
-        // However, this two-phase design is order-dependent — do NOT merge the phases or
-        // remove the barrier without adding explicit synchronization.
-        //
-        #pragma omp parallel for default(none) shared(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, droneBakeryDist, proposals)
+        // --- Phase 1: 100% Parallel Search ---
+        #pragma omp parallel for default(none) shared(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, droneBakeryDist, proposals) schedule(dynamic)
         for (int c = 0; c < cCount; c++) {
             proposals[c].isValid = 0;
             proposals[c].bestTime = INFINITY;
 
-            // Only process active customers who still need bread
             if (customers[c]->status != CUSTOMER_ACTIVE || customers[c]->demand == 0) continue;
 
-            // Use the customer's stable row index to look up the correct distance matrix row,
-            // since qsort may have reordered the customers array.
             int matrixRow = customers[c]->distanceMatrixRow;
 
             for (int b = 0; b < bCount; b++) {
-                if (bakeries[b].inventory == 0) continue; // Bakery is empty
+                if (bakeries[b].inventory == 0) continue;
 
                 for (int d = 0; d < dCount; d++) {
-                    // Drone must be free right now
                     if (drones[d].currentCustomer != NULL) continue;
 
-                    // Route: Drone -> Bakery -> Customer
                     double totalDist = droneBakeryDist[d][b] + distanceMatrix[matrixRow][b];
                     double flightTime = totalDist / drones[d].velocity; 
 
@@ -252,45 +249,107 @@ void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int 
             }
         }
 
-        // --- Phase 2: Sequential Commitment ---
-        // Iterate over customers (they are already sorted by Score!)
+        // --- Phase 2: 100% Parallel Commitment (NO SEQUENTIAL CODE) ---
+        #pragma omp parallel for default(none) shared(customers, cCount, bakeries, drones, proposals, distanceMatrix, currentRound, matchMade, drone_locks, bakery_locks, customer_locks) 
         for (int c = 0; c < cCount; c++) {
-            if (proposals[c].isValid) {
-                int dId = proposals[c].droneId;
-                int bId = proposals[c].bakeryId;
+            if (!proposals[c].isValid) continue;
 
-                // Ensure another higher-priority customer didn't steal our drone or bread
-                if (drones[dId].currentCustomer == NULL && bakeries[bId].inventory > 0) {
+            // 1. Lock Primary Customer
+            omp_set_lock(&customer_locks[c]);
+            if (customers[c]->status != CUSTOMER_ACTIVE || customers[c]->demand == 0) {
+                omp_unset_lock(&customer_locks[c]);
+                continue;
+            }
+
+            int dId = proposals[c].droneId;
+            int bId = proposals[c].bakeryId;
+
+            // 2. Lock Drone
+            omp_set_lock(&drone_locks[dId]);
+            if (drones[dId].currentCustomer == NULL) {
+                
+                // 3. Lock Bakery
+                omp_set_lock(&bakery_locks[bId]);
+                if (bakeries[bId].inventory > 0) {
                     
-                    matchMade = 1; // Match successful! Loop will run again to see if splits are needed
-                    
-                    drones[dId].currentCustomer = customers[c];
-                    
-                    // Calculate how much bread the drone takes
+                    #pragma omp atomic write
+                    matchMade = 1;
+
+                    // Primary Assignment
                     int breadToTake = (customers[c]->demand < drones[dId].capacity) ? customers[c]->demand : drones[dId].capacity;
-                    if (breadToTake > bakeries[bId].inventory) breadToTake = bakeries[bId].inventory;
-                    
-                    // Update Bakery and Customer
+                    breadToTake = (breadToTake < bakeries[bId].inventory) ? breadToTake : bakeries[bId].inventory;
+
                     bakeries[bId].inventory -= breadToTake;
                     customers[c]->demand -= breadToTake;
-                    
-                    // Update Drone status (Delivery Execution)
-                    int timeTaken = (int)ceil(proposals[c].bestTime);
-                    drones[dId].availableAtRound = currentRound + timeTaken;
-                    drones[dId].pos = customers[c]->pos;
-                    drones[dId].load = breadToTake;
 
-                    if (customers[c]->demand == 0) {
-                        customers[c]->status = CUSTOMER_SERVED;
+                    double totalTime = proposals[c].bestTime;
+                    Position finalPos = customers[c]->pos;
+                    int remainingCap = drones[dId].capacity - breadToTake;
+
+                    // PIGGYBACKING LOGIC
+                    if (remainingCap > 0 && bakeries[bId].inventory > 0) {
+                        for (int c2 = 0; c2 < cCount; c2++) {
+                            if (c == c2) continue;
+
+                            if (customers[c2]->status == CUSTOMER_ACTIVE && 
+                                customers[c2]->demand > 0 && 
+                                customers[c2]->demand <= remainingCap && 
+                                customers[c2]->demand <= bakeries[bId].inventory) {
+                                
+                                double distC1toC2 = calculateDistance(finalPos, customers[c2]->pos);
+                                
+                                if (distC1toC2 < distanceMatrix[customers[c]->distanceMatrixRow][bId]) {
+                                    
+                                    // NON-BLOCKING LOCK: Only take C2 if no one else is currently locking them!
+                                    if (omp_test_lock(&customer_locks[c2])) {
+                                        if (customers[c2]->status == CUSTOMER_ACTIVE && customers[c2]->demand > 0) {
+                                            
+                                            int extraBread = customers[c2]->demand;
+                                            bakeries[bId].inventory -= extraBread;
+                                            customers[c2]->demand -= extraBread;
+                                            breadToTake += extraBread;
+                                            
+                                            totalTime += calculateFlightTime(distC1toC2, drones[dId].velocity);
+                                            finalPos = customers[c2]->pos; 
+                                            
+                                            if (customers[c2]->demand <= 0) {
+                                                customers[c2]->status = CUSTOMER_SERVED;
+                                            }
+                                            omp_unset_lock(&customer_locks[c2]);
+                                            break; // Stop looking for more piggybacks
+                                        }
+                                        omp_unset_lock(&customer_locks[c2]);
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    printf("  -> Assigned Drone %d to Customer %d (Takes %d bread from Bakery %d, Arrives at round %d)\n",
-                           drones[dId].id, customers[c]->id, breadToTake, bakeries[bId].id, drones[dId].availableAtRound);
+                    // Finalize Drone
+                    drones[dId].currentCustomer = customers[c]; 
+                    drones[dId].availableAtRound = currentRound + (int)ceil(totalTime);
+                    drones[dId].pos = finalPos; 
+                    drones[dId].load = breadToTake; 
+
+                    if (customers[c]->demand <= 0) {
+                        customers[c]->status = CUSTOMER_SERVED;
+                    }
                 }
+                omp_unset_lock(&bakery_locks[bId]);
             }
+            omp_unset_lock(&drone_locks[dId]);
+            omp_unset_lock(&customer_locks[c]);
         }
     }
-    // Cleanup memory
+
+    // CLEANUP LOCKS & MEMORY
+    for (int d = 0; d < dCount; d++) omp_destroy_lock(&drone_locks[d]);
+    for (int b = 0; b < bCount; b++) omp_destroy_lock(&bakery_locks[b]);
+    for (int c = 0; c < cCount; c++) omp_destroy_lock(&customer_locks[c]);
+    free(drone_locks);
+    free(bakery_locks);
+    free(customer_locks);
+    
     free(proposals);
     for (int d = 0; d < dCount; d++) free(droneBakeryDist[d]);
     free(droneBakeryDist);

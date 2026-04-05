@@ -196,7 +196,7 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
 void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount) {
     *bCount = 500;
     *dCount = 50;
-    *cCount = 10000;
+    *cCount = 100000;
 
     *bakeries = (Bakery*) malloc(sizeof(Bakery) * (*bCount));
     *drones   = (Drone*)  malloc(sizeof(Drone)  * (*dCount));
@@ -348,7 +348,7 @@ int main() {
     printf("==================================================\n");
     
     //threadCounts is the array of different thread counts we want to test, and numTests is the number of different tests we will run
-    int threadCounts[] = {1, 2, 4, 6, 8, 10, 12,14, 16, 20, 24};
+    int threadCounts[] = {1, 2, 4, 6, 8, 16, 32, 64};
     int numTests = sizeof(threadCounts) / sizeof(threadCounts[0]);
     int maxRounds = 10; // Maximum number of rounds to simulate in each test, can be adjusted based on desired test duration and complexity
     printf("+---------+--------------+----------+\n");

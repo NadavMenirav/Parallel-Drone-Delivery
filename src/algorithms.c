@@ -325,14 +325,17 @@ void parallelQuickSort(Customer** arr, int left, int right) {
         }
     }
 
-    // Split tasks to other threads (Divide and Conquer)
-    #pragma omp task shared(arr)
+    // --- THE FIX ---
+    // 1. Move 'if' OUTSIDE the #pragma task to prevent "Phantom Tasks"
+    // 2. Use 'firstprivate' instead of 'shared' to prevent "Use-After-Free" crashes
+    
     if (left < j) {
+        #pragma omp task firstprivate(arr, left, j)
         parallelQuickSort(arr, left, j);
     }
 
-    #pragma omp task shared(arr)
     if (i < right) {
+        #pragma omp task firstprivate(arr, i, right)
         parallelQuickSort(arr, i, right);
     }
 }

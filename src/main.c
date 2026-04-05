@@ -187,131 +187,92 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
 
 /*
  * Stress-test scenario: simulates a city grid with:
- *   - 5 bakeries (different capacities & production distributions)
- *   - 10 drones (varying speeds & capacities, deployed from 2 bases)
- *   - 20 customers (scattered positions, varying demands)
+ *   - 500 bakeries (different capacities & production distributions)
+ *   - 1000 drones (varying speeds & capacities, deployed from 2 bases)
+ *   - 2000 customers (scattered positions, varying demands)
  *
  * Positions are spread across a 200x200 coordinate space.
  */
 void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount) {
-
-    *bCount = 5;
-    *dCount = 10;
-    *cCount = 20;
+    *bCount = 500;
+    *dCount = 50;
+    *cCount = 10000;
 
     *bakeries = (Bakery*) malloc(sizeof(Bakery) * (*bCount));
     *drones   = (Drone*)  malloc(sizeof(Drone)  * (*dCount));
     *customers = (Customer**) malloc(sizeof(Customer*) * (*cCount));
     if (*bakeries == NULL || *drones == NULL || *customers == NULL) exit(1);
 
-    // ── Bakeries ──
-    // Each bakery has 3 production rules to create a non-trivial probability distribution
-    // Rule format: {breadCount, cumulativeProbability}
-    //   e.g. {5, 0.3}, {10, 0.8}, {20, 1.0} means:
-    //     30% chance of 5, 50% chance of 10, 20% chance of 20
-
     typedef struct { double x, y; int capacity; int rules[3][2]; } BakeryDef;
     BakeryDef bDefs[] = {
-        {  20.0,  30.0, 150, { {5, 30}, {12, 80}, {25, 100} } },   // B1: downtown, high cap
-        { 180.0,  20.0,  80, { {3, 40}, { 8, 85}, {15, 100} } },   // B2: east side, medium
-        { 100.0, 100.0, 200, { {8, 25}, {15, 70}, {30, 100} } },   // B3: central, highest cap
-        {  40.0, 180.0,  60, { {2, 50}, { 6, 90}, {10, 100} } },   // B4: south-west, small
-        { 160.0, 170.0, 100, { {4, 35}, {10, 75}, {18, 100} } },   // B5: south-east, medium
+        {  20.0,  30.0, 150, { {5, 30}, {12, 80}, {25, 100} } },
+        { 180.0,  20.0,  80, { {3, 40}, { 8, 85}, {15, 100} } },
+        { 100.0, 100.0, 200, { {8, 25}, {15, 70}, {30, 100} } },
+        {  40.0, 180.0,  60, { {2, 50}, { 6, 90}, {10, 100} } },
+        { 160.0, 170.0, 100, { {4, 35}, {10, 75}, {18, 100} } },
     };
 
     for (int i = 0; i < *bCount; i++) {
+        int bIdx = i % 5;
         (*bakeries)[i].id = i + 1;
-        (*bakeries)[i].pos.x = bDefs[i].x;
-        (*bakeries)[i].pos.y = bDefs[i].y;
+        (*bakeries)[i].pos.x = bDefs[bIdx].x;
+        (*bakeries)[i].pos.y = bDefs[bIdx].y;
         (*bakeries)[i].inventory = 0;
-        (*bakeries)[i].capacity = bDefs[i].capacity;
-        (*bakeries)[i].seed = (unsigned int)time(NULL) ^ (i * 31 + 7);
+        (*bakeries)[i].capacity = bDefs[bIdx].capacity;
+        (*bakeries)[i].seed = 12345 + i; 
         (*bakeries)[i].ruleCount = 3;
 
         (*bakeries)[i].cumulativeProb = (ProductionRule*)malloc(3 * sizeof(ProductionRule));
         if ((*bakeries)[i].cumulativeProb == NULL) exit(1);
 
         for (int r = 0; r < 3; r++) {
-            (*bakeries)[i].cumulativeProb[r].breadCount = bDefs[i].rules[r][0];
-            (*bakeries)[i].cumulativeProb[r].probability = bDefs[i].rules[r][1] / 100.0;
+            (*bakeries)[i].cumulativeProb[r].breadCount = bDefs[bIdx].rules[r][0];
+            (*bakeries)[i].cumulativeProb[r].probability = bDefs[bIdx].rules[r][1] / 100.0;
         }
     }
 
-    // ── Drones ──
-    // Two drone bases: Base A at (20, 50) and Base B at (160, 160)
-    // Drones have varying speed/capacity tradeoffs (fast+small vs slow+large)
-
     typedef struct { double x, y, velocity; int capacity; } DroneDef;
     DroneDef dDefs[] = {
-        // Base A drones (north-west)
-        {  20.0,  50.0, 3.0, 4 },   // D1:  fast, small
-        {  20.0,  50.0, 8.0, 8 },   // D2:  slow, large
-        {  25.0,  55.0, 2.5, 5 },   // D3:  balanced
-        {  15.0,  45.0, 5.0, 3 },   // D4:  very fast, tiny
-        {  20.0,  50.0, 11.0, 6 },   // D5:  medium
-        // Base B drones (south-east)
-        { 160.0, 160.0, 3.5, 3 },   // D6:  fast, small
-        { 160.0, 160.0, 1.8, 7 },   // D7:  slow, large
-        { 155.0, 165.0, 2.2, 6 },   // D8:  balanced
-        { 165.0, 155.0, 7.8, 4 },   // D9:  medium-fast
-        { 160.0, 160.0, 5.2, 10 },  // D10: slowest, biggest
+        {  20.0,  50.0, 3.0, 4 }, {  20.0,  50.0, 8.0, 8 }, {  25.0,  55.0, 2.5, 5 },
+        {  15.0,  45.0, 5.0, 3 }, {  20.0,  50.0, 11.0, 6 }, { 160.0, 160.0, 3.5, 3 },
+        { 160.0, 160.0, 1.8, 7 }, { 155.0, 165.0, 2.2, 6 }, { 165.0, 155.0, 7.8, 4 },
+        { 160.0, 160.0, 5.2, 10 }
     };
 
     for (int i = 0; i < *dCount; i++) {
+        int dIdx = i % 10;
         (*drones)[i].id = i + 1;
-        (*drones)[i].pos.x = dDefs[i].x;
-        (*drones)[i].pos.y = dDefs[i].y;
-        (*drones)[i].velocity = dDefs[i].velocity;
-        (*drones)[i].capacity = dDefs[i].capacity;
+        (*drones)[i].pos.x = dDefs[dIdx].x;
+        (*drones)[i].pos.y = dDefs[dIdx].y;
+        (*drones)[i].velocity = dDefs[dIdx].velocity;
+        (*drones)[i].capacity = dDefs[dIdx].capacity;
         (*drones)[i].availableAtRound = 0;
         (*drones)[i].currentCustomer = NULL;
     }
 
-    // ── Customers ──
-    // 20 customers scattered across the city with varying demands (1–10 loaves)
-    // Some are clustered near bakeries, others are far away to stress the routing
-
     typedef struct { double x, y; int demand; } CustomerDef;
     CustomerDef cDefs[] = {
-        // Near bakery B1 (20,30) — easy to serve
-        {  10.0,  15.0,  3 },   // C1
-        {  35.0,  25.0,  5 },   // C2
-        // Near bakery B3 (100,100) — central cluster
-        {  90.0,  85.0,  4 },   // C3
-        { 110.0, 115.0,  7 },   // C4
-        { 105.0,  90.0,  2 },   // C5
-        // Far north-east corner — long delivery distances
-        { 190.0,   5.0,  6 },   // C6
-        { 195.0,  15.0,  8 },   // C7
-        // South-west corner — only B4 is close
-        {  15.0, 190.0,  4 },   // C8
-        {  30.0, 195.0, 10 },   // C9: high demand, remote
-        {  50.0, 175.0,  3 },   // C10
-        // Scattered middle
-        {  70.0,  50.0,  5 },   // C11
-        { 130.0,  60.0,  6 },   // C12
-        {  60.0, 130.0,  4 },   // C13
-        { 140.0, 130.0,  3 },   // C14
-        // Far edges — worst case for scheduling
-        {   5.0,  100.0, 9 },   // C15: high demand, edge
-        { 195.0, 100.0,  7 },   // C16: high demand, edge
-        { 100.0,   5.0,  2 },   // C17: far north
-        { 100.0, 195.0,  5 },   // C18: far south
-        // Dense demand cluster south-east
-        { 170.0, 185.0,  8 },   // C19: high demand near B5
-        { 150.0, 190.0,  6 },   // C20
+        {  10.0,  15.0,  3 }, {  35.0,  25.0,  5 }, {  90.0,  85.0,  4 }, { 110.0, 115.0,  7 },
+        { 105.0,  90.0,  2 }, { 190.0,   5.0,  6 }, { 195.0,  15.0,  8 }, {  15.0, 190.0,  4 },
+        {  30.0, 195.0, 10 }, {  50.0, 175.0,  3 }, {  70.0,  50.0,  5 }, { 130.0,  60.0,  6 },
+        {  60.0, 130.0,  4 }, { 140.0, 130.0,  3 }, {   5.0, 100.0,  9 }, { 195.0, 100.0,  7 },
+        { 100.0,   5.0,  2 }, { 100.0, 195.0,  5 }, { 170.0, 185.0,  8 }, { 150.0, 190.0,  6 }
     };
 
+    // Use a fixed seed for reproducible randomness
+    srand(9999);
     for (int i = 0; i < *cCount; i++) {
+        int cIdx = i % 20;
         (*customers)[i] = (Customer*) malloc(sizeof(Customer));
         if ((*customers)[i] == NULL) exit(1);
 
         (*customers)[i]->id = i + 1;
-        (*customers)[i]->pos.x = cDefs[i].x;
-        (*customers)[i]->pos.y = cDefs[i].y;
+        // Adding random noise so customers don't stack on the exact same coordinate
+        (*customers)[i]->pos.x = cDefs[cIdx].x + ((rand() % 10) - 5);
+        (*customers)[i]->pos.y = cDefs[cIdx].y + ((rand() % 10) - 5);
         (*customers)[i]->priority = 1;
         (*customers)[i]->status = CUSTOMER_ACTIVE;
-        (*customers)[i]->demand = cDefs[i].demand;
+        (*customers)[i]->demand = cDefs[cIdx].demand;
         (*customers)[i]->closestBakeryDistance = DBL_MAX;
         (*customers)[i]->tempScore = -1.0;
         (*customers)[i]->distanceMatrixRow = -1;
@@ -382,140 +343,117 @@ void printCustomerSummary(Customer** customers, int cCount) {
 }
 
 int main() {
+    printf("==================================================\n");
+    printf("   DRONE DELIVERY SIMULATION - STRESS BENCHMARK   \n");
+    printf("==================================================\n");
+    
+    //threadCounts is the array of different thread counts we want to test, and numTests is the number of different tests we will run
+    int threadCounts[] = {1, 2, 4, 6, 8, 16, 32, 64};
+    int numTests = sizeof(threadCounts) / sizeof(threadCounts[0]);
+    int maxRounds = 10; // Maximum number of rounds to simulate in each test, can be adjusted based on desired test duration and complexity
+    printf("+---------+--------------+----------+\n");
+    printf("| Threads | Time (sec)   | Speedup  |\n");
+    printf("+---------+--------------+----------+\n");
 
-    Bakery* bakeries;
-    Drone* drones;
-    Customer** customers;
-    int bCount, dCount, cCount;
+    double baseTime = 0.0; // Will store the time of the sequential run (Thread 1)
 
-    initSystemStress(&bakeries, &bCount, &drones, &dCount, &customers, &cCount);
-    //initSystemMock(&bakeries, &bCount, &drones, &dCount, &customers, &cCount);
+    for (int i = 0; i < numTests; i++) {
+        int threads = threadCounts[i];
 
-    printf("=== Drone Bakery Delivery — Stress Test ===\n");
-    printf("Config: %d bakeries, %d drones, %d customers, 50 rounds\n\n", bCount, dCount, cCount);
+        // Disable dynamic adjustment of threads
+        omp_set_dynamic(0);
 
-    // Build distance matrix (also sets distanceMatrixRow for each customer)
-    double** distanceMatrix = calculateDistanceMatrix(bakeries, bCount, customers, cCount);
-    if (distanceMatrix == NULL) {
-        printf("Failed to allocate distance matrix!\n");
-        exit(1);
-    }
+        // Force the specific number of threads
+        omp_set_num_threads(threads);
+    
+        // ... the rest of your benchmark loop ...
 
-    findClosestBakery(bakeries, bCount, customers, cCount, distanceMatrix);
+        // reset the random seed for reproducibility in each test
+        Bakery* bakeries;
+        Drone* drones;
+        Customer** customers;
+        int bCount, dCount, cCount;
 
-    // Track stats
-    int totalBreadDelivered = 0;
-    int totalAssignments = 0;
-    double startTime = omp_get_wtime();
+        initSystemStress(&bakeries, &bCount, &drones, &dCount, &customers, &cCount);
 
-    int t = 1;
-    int maxRounds = 50;
+        double** distanceMatrix = calculateDistanceMatrix(bakeries, bCount, customers, cCount);
+        if (distanceMatrix == NULL) {
+            printf("Failed to allocate distance matrix!\n");
+            exit(1);
+        }
 
-    while (t <= maxRounds) {
+        findClosestBakery(bakeries, bCount, customers, cCount, distanceMatrix);
 
-        printf("── Round %d ──\n", t);
+        // start the timer!
+        double startTime = omp_get_wtime();
 
-        // Stage 1: Production & drone updates
-// Stage 1: Production & drone updates
-        produceBread(bakeries, bCount);
-        updateDrones(drones, dCount, t, bakeries, bCount);
-        printBakeryStatus(bakeries, bCount);
-        printDroneStatus(drones, dCount, t);
+        int t = 1;
+        while (t <= maxRounds) {
+           // removed all the printfs from the main loop to avoid garbled output and focus on timing and speedup results 
+            // printf("── Round %d ──\n", t);
 
-        // Stage 2: Scoring & sorting
-        double avgVelocity = 0.0, avgCapacity = 0.0;
-        calculateDroneAverages(drones, dCount, &avgVelocity, &avgCapacity);
-        calculateCustomerScoresStage2(customers, cCount, avgVelocity, avgCapacity);
-        qsort(customers, cCount, sizeof(Customer*), compareCustomersDesc);
+            // Stage 1: Production & drone updates
+            produceBread(bakeries, bCount);
+            updateDrones(drones, dCount, t, bakeries, bCount);
+            
+            // printBakeryStatus(bakeries, bCount);
+            // printDroneStatus(drones, dCount, t);
 
-        // Print top 3 customers by score
-        printf("  Top scores: ");
-        int shown = 0;
-        for (int i = 0; i < cCount && shown < 3; i++) {
-            if (customers[i]->tempScore > 0) {
-                printf("C%d=%.2f  ", customers[i]->id, customers[i]->tempScore);
-                shown++;
+            // Stage 2: Scoring & sorting
+            double avgVelocity = 0.0, avgCapacity = 0.0;
+            calculateDroneAverages(drones, dCount, &avgVelocity, &avgCapacity);
+            calculateCustomerScoresStage2(customers, cCount, avgVelocity, avgCapacity);
+
+            //sorting the customers by their tempScore in descending order, using a parallel quicksort
+            sortCustomersParallel(customers, cCount);
+
+            // Stage 3: Drone assignment
+            assignDronesStage3(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, t);
+
+            // Stage 4: Transitions
+            updateCustomerPriorities(customers, cCount);
+            processCustomerTransitions(customers, cCount, t);
+            
+            // printCustomerSummary(customers, cCount);
+
+            // check if all customers are departed, if so, we can end the simulation early
+            int allDeparted = 1;
+            for (int j = 0; j < cCount; j++) {
+                if (customers[j]->status != CUSTOMER_DEPARTED) {
+                    allDeparted = 0;
+                    break;
+                }
             }
-        }
-        printf("\n");
-
-        // Stage 3: Drone assignment
-        int breadBefore = 0;
-        for (int i = 0; i < bCount; i++) breadBefore += bakeries[i].inventory;
-
-        assignDronesStage3(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, t);
-
-        int breadAfter = 0;
-        for (int i = 0; i < bCount; i++) breadAfter += bakeries[i].inventory;
-        int breadDispatched = breadBefore - breadAfter;
-        totalBreadDelivered += breadDispatched;
-
-        // Count assignments this round
-        int assignsThisRound = 0;
-        for (int i = 0; i < dCount; i++) {
-            if (drones[i].availableAtRound > t) assignsThisRound++;
-        }
-        totalAssignments += assignsThisRound;
-
-        // Stage 4: Transitions
-        updateCustomerPriorities(customers, cCount);
-        processCustomerTransitions(customers, cCount, t);
-        printCustomerSummary(customers, cCount);
-
-        // Check if all customers have departed
-        int allDeparted = 1;
-        for (int i = 0; i < cCount; i++) {
-            if (customers[i]->status != CUSTOMER_DEPARTED) {
-                allDeparted = 0;
+            if (allDeparted) {
                 break;
             }
-        }
-        if (allDeparted) {
-            printf("\n*** All customers have departed at round %d ***\n", t);
-            break;
+
+            t++;
         }
 
-        printf("\n");
-        t++;
+        // stop the clock!
+        double elapsed = omp_get_wtime() - startTime;
+
+        // calculate speedup compared to the single-threaded baseline
+        if (i == 0) {
+            baseTime = elapsed; // Set the baseline time for single-threaded execution
+        }
+        double speedup = baseTime / elapsed;
+
+        // Print results for the current thread count
+        printf("| %-7d | %-12.4f | %-8.2fx |\n", threads, elapsed, speedup);
+
+        // Clean up memory for the current test before the next iteration
+        freeDistanceMatrix(distanceMatrix, cCount);
+        for (int b = 0; b < bCount; b++) free(bakeries[b].cumulativeProb);
+        free(bakeries);
+        free(drones);
+        for (int c = 0; c < cCount; c++) free(customers[c]);
+        free(customers);
     }
 
-    double elapsed = omp_get_wtime() - startTime;
+    printf("+---------+--------------+----------+\n");
+    printf("Benchmark Completed Successfully.\n");
 
-    // ── Final Summary ──
-    printf("\n========================================\n");
-    printf("         SIMULATION SUMMARY\n");
-    printf("========================================\n");
-    printf("  Rounds completed:    %d\n", t > maxRounds ? maxRounds : t);
-    printf("  Total bread sent:    %d loaves\n", totalBreadDelivered);
-    printf("  Total assignments:   %d\n", totalAssignments);
-    printf("  Wall-clock time:     %.4f seconds\n", elapsed);
-    printf("  Threads used:        %d\n", omp_get_max_threads());
-    printf("  Final customer status:\n");
-
-    int finalActive = 0, finalDeparted = 0;
-    for (int i = 0; i < cCount; i++) {
-        if (customers[i]->status == CUSTOMER_ACTIVE) finalActive++;
-        else if (customers[i]->status == CUSTOMER_DEPARTED) finalDeparted++;
-    }
-    printf("    Active:   %d\n", finalActive);
-    printf("    Departed: %d\n", finalDeparted);
-
-    printf("  Final bakery inventory:\n");
-    for (int i = 0; i < bCount; i++) {
-        printf("    B%d: %d/%d\n", bakeries[i].id, bakeries[i].inventory, bakeries[i].capacity);
-    }
-    printf("========================================\n");
-
-    // Cleanup
-    freeDistanceMatrix(distanceMatrix, cCount);
-    for (int i = 0; i < bCount; i++) free(bakeries[i].cumulativeProb);
-    free(bakeries);
-    free(drones);
-    for (int i = 0; i < cCount; i++) {
-        free(customers[i]);
-    }
-    // Free the array of pointers
-    free(customers);
-
-        return 0;
-    }
+    return 0;
+}

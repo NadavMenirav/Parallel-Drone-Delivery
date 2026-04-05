@@ -41,4 +41,7 @@ void calculateCustomerScoresStage2(Customer** customers, int cCount, double avgV
 // Assigns drones to customers, planning the route and updating inventory
 void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, double** distanceMatrix, int currentRound);
 
+//sorts customers in parallel based on their tempScore field, in descending order
+void sortCustomersParallel(Customer** customers, int count);
+
 #endif

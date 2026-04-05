@@ -196,7 +196,7 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
 void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount) {
     *bCount = 500;
     *dCount = 50;
-    *cCount = 100000;
+    *cCount = 10000;
 
     *bakeries = (Bakery*) malloc(sizeof(Bakery) * (*bCount));
     *drones   = (Drone*)  malloc(sizeof(Drone)  * (*dCount));

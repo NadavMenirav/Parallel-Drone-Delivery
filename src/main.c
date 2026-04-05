@@ -359,9 +359,14 @@ int main() {
 
     for (int i = 0; i < numTests; i++) {
         int threads = threadCounts[i];
-        
-        // cores is the number of CPU cores available, we will not allow more threads than cores to avoid excessive context switching and performance degradation
+
+        // Disable dynamic adjustment of threads
+        omp_set_dynamic(0);
+
+        // Force the specific number of threads
         omp_set_num_threads(threads);
+    
+        // ... the rest of your benchmark loop ...
 
         // reset the random seed for reproducibility in each test
         Bakery* bakeries;

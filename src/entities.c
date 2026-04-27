@@ -53,6 +53,7 @@ void initDrone(const int id, const int capacity, const int currentRound, const P
     drone->pos = pos; // In main, we will call this with the position of the drone base
     drone->velocity = velocity;
     drone->currentCustomer = NULL; // New drones are yet to be assigned a customer
+    drone->currentBakeryId = -1;   // New drones are not yet associated with any bakery
 }
 
 // This function initializes a drone base and handles the allocated memory

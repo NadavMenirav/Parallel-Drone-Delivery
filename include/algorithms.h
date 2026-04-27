@@ -41,4 +41,27 @@ void calculateCustomerScoresStage2(Customer** customers, int cCount, double avgV
 // Assigns drones to customers, planning the route and updating inventory
 void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, double** distanceMatrix, int currentRound);
 
+/*
+ * Stage 3.5 — Multi-Customer Trip Extension.
+ *
+ * After assignDronesStage3 has matched each free drone to a primary customer
+ * (one trip = drone -> bakery -> primary_customer), this function piggybacks
+ * additional nearby customers onto those trips when the drone has spare
+ * capacity AND the same bakery still has inventory. The drone picks up the
+ * extra bread at the same bakery before leaving and delivers to the extra
+ * customers in nearest-neighbour order along the route.
+ *
+ * Parallelism follows the same two-phase, barrier-synchronized pattern used
+ * by assignDronesStage3:
+ *   - Phase A (parallel over drones): each busy drone independently scans
+ *     active customers and proposes the best (smallest detour) candidate.
+ *   - Phase B (sequential): proposals are committed in order, re-checking
+ *     bakery inventory and customer state to avoid races.
+ * The whole thing loops until no more extensions are possible.
+ */
+void extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, int currentRound);
+
+//sorts customers in parallel based on their tempScore field, in descending order
+void sortCustomersParallel(Customer** customers, int count);
+
 #endif

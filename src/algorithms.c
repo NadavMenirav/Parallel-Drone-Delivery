@@ -357,7 +357,16 @@ void extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries
             // The bakery check is a fast prefilter — Phase B re-checks before commit.
             if (spareCap <= 0) continue;
             if (bakeries[bId].inventory <= 0) continue;
-
+            // ==========================================
+            // NEW LOGIC: Calculate dynamic detour threshold
+            // ==========================================
+            // How long did it take to get from the bakery to where the drone currently is?
+            double primaryTripDist = calculateDistance(bakeries[bId].pos, drones[d].pos);
+            double primaryTripTime = primaryTripDist / drones[d].velocity;
+            
+            // Set K = 0.75. The detour cannot take more than 75% of the primary trip time.
+            double maxDetourTime = 0.75 * primaryTripTime; 
+            // ==========================================
             // Greedy nearest-neighbour: the cheapest extension is the active customer
             // closest to the drone's current end-of-trip position (drones[d].pos).
             for (int c = 0; c < cCount; c++) {
@@ -368,6 +377,9 @@ void extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries
 
                 double detourDist = calculateDistance(drones[d].pos, cust->pos);
                 double detourTime = detourDist / drones[d].velocity;
+                if (detourTime > maxDetourTime) {
+                    continue; // Detour is too long relative to the base trip! Skip.
+                }
 
                 if (detourTime < proposals[d].detourTime) {
                     int amount = (cust->demand < spareCap) ? cust->demand : spareCap;

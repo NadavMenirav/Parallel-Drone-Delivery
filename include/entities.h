@@ -66,7 +66,13 @@ typedef struct {
     int availableAtRound; // The round in which the drone will finish its task and will be free
     Position pos;
     double velocity; // The speed in which the drone flies
-    Customer* currentCustomer; // The current customer it serves
+    Customer* currentCustomer; // The current (primary) customer it serves
+    /*
+     * The id of the bakery the drone is currently picking up from on its active trip, or -1 if idle.
+     * Used by extendTripsMultiCustomer (Stage 3.5) to know where the drone can grab additional bread
+     * to serve more customers on the same trip. Reset to -1 by updateDrones when the trip completes.
+     */
+    int currentBakeryId;
 } Drone;
 
 // This struct represents the DroneBase, where all the drones spawn

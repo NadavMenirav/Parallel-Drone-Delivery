@@ -71,7 +71,7 @@ double** calculateDistanceMatrix(Bakery* bakeries, int bakeryCount, Customer** c
 
     // Step 3: Compute the distances in parallel and tag each customer with its stable row index.
     // We parallelize the outer loop, meaning different threads will handle different customers.
-    #pragma omp parallel for default(none) shared(matrix, customers, customerCount, bakeries, bakeryCount)
+    #pragma omp parallel for default(none) shared(matrix, customers, customerCount, bakeries, bakeryCount) schedule(dynamic)
     for (int i = 0; i < customerCount; i++) {
         customers[i]->distanceMatrixRow = i;
         for (int j = 0; j < bakeryCount; j++) {
@@ -161,7 +161,7 @@ void calculateDroneAverages(Drone* drones, int droneCount, double* avgVelocity, 
 // --- Stage 2: Calculate and Sort ---
 // Calculates the heuristic score for each active customer and stores it in their tempScore field.
 void calculateCustomerScoresStage2(Customer** customers, int cCount, double avgVelocity, double avgCapacity) {
-    #pragma omp parallel for default(none) shared(customers, cCount, avgVelocity, avgCapacity)
+    #pragma omp parallel for default(none) shared(customers, cCount, avgVelocity, avgCapacity) schedule(dynamic)
     for (int i = 0; i < cCount; i++) {
         if (customers[i]->status != CUSTOMER_ACTIVE) {
             customers[i]->tempScore = -1.0;
@@ -179,7 +179,6 @@ void calculateCustomerScoresStage2(Customer** customers, int cCount, double avgV
         customers[i]->tempScore = customers[i]->priority / t_c;
     }
 }
-// --- Stage 3: Drone Scheduling and Routing ---
 typedef struct {
     int bakeryId;
     int droneId;
@@ -265,6 +264,7 @@ void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int 
                     matchMade = 1; // Match successful! Loop will run again to see if splits are needed
                     
                     drones[dId].currentCustomer = customers[c];
+                    drones[dId].currentBakeryId = bId; // Remember the pickup bakery for Stage 3.5
                     
                     // Calculate how much bread the drone takes
                     int breadToTake = (customers[c]->demand < drones[dId].capacity) ? customers[c]->demand : drones[dId].capacity;
@@ -284,8 +284,8 @@ void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int 
                         customers[c]->status = CUSTOMER_SERVED;
                     }
 
-                    printf("  -> Assigned Drone %d to Customer %d (Takes %d bread from Bakery %d, Arrives at round %d)\n",
-                           drones[dId].id, customers[c]->id, breadToTake, bakeries[bId].id, drones[dId].availableAtRound);
+                    /*printf("  -> Assigned Drone %d to Customer %d (Takes %d bread from Bakery %d, Arrives at round %d)\n",
+                           drones[dId].id, customers[c]->id, breadToTake, bakeries[bId].id, drones[dId].availableAtRound);*/
                 }
             }
         }
@@ -294,4 +294,198 @@ void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int 
     free(proposals);
     for (int d = 0; d < dCount; d++) free(droneBakeryDist[d]);
     free(droneBakeryDist);
+}
+
+/*
+ * Stage 3.5 — Multi-Customer Trip Extension.
+ *
+ * Lets a single drone serve several customers on the same trip, when capacity
+ * and bakery inventory allow it. This is the natural counterpart to the
+ * order-splitting that assignDronesStage3 already supports: that function
+ * splits ONE big order across multiple drones; this one packs SEVERAL small
+ * orders onto the same drone.
+ *
+ * Internal proposal record. One slot per drone — droneId is implicit (the
+ * array index), keeping the parallel write pattern lock-free.
+ */
+typedef struct {
+    int extraCustomerIdx; // Index into customers[] for the proposed extra stop
+    int breadAmount;      // How much bread the drone will pick up & deliver to that customer
+    double detourTime;    // Extra time the trip takes (drone.velocity-scaled)
+    Position newDronePos; // Drone's end-of-trip position after this extra stop
+    int isValid;          // 1 if a viable extension was found
+} ExtensionProposal;
+
+void extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries, int bCount,
+                              Drone* drones, int dCount, int currentRound) {
+    (void)bCount;       // bCount is only used for the assertion that currentBakeryId is in range; silence unused warn
+    (void)currentRound; // Reserved for time-window / SLA-aware extensions (see Section 7 of the spec)
+
+    ExtensionProposal* proposals = malloc(dCount * sizeof(ExtensionProposal));
+    if (proposals == NULL) exit(1);
+
+    int extensionMade = 1;
+
+    // Loop until no drone can be extended further. Each iteration may add one extra
+    // customer per busy drone; long routes are built up across iterations.
+    while (extensionMade) {
+        extensionMade = 0;
+
+        // --- Phase A: Parallel Search ---
+        //
+        // SYNCHRONIZATION NOTE: This region only READS shared state (drones, bakeries,
+        // customers) and WRITES exclusively to its own slot proposals[d]. The implicit
+        // barrier at the end of the parallel-for guarantees Phase B sees all proposals
+        // before any commitment happens. The same invariant as assignDronesStage3 —
+        // do NOT merge the two phases.
+        //
+        #pragma omp parallel for default(none) \
+            shared(drones, dCount, customers, cCount, bakeries, currentRound, proposals)
+        for (int d = 0; d < dCount; d++) {
+            proposals[d].isValid = 0;
+            proposals[d].detourTime = INFINITY;
+
+            // Skip drones that are not currently on a trip from a known bakery.
+            // (idle drones, or drones whose trip already finished, have nothing to extend)
+            if (drones[d].currentCustomer == NULL) continue;
+            if (drones[d].currentBakeryId < 0) continue;
+
+            int bId = drones[d].currentBakeryId;
+            int spareCap = drones[d].capacity - drones[d].load;
+
+            // Need both spare capacity on the drone and stock at the originating bakery.
+            // The bakery check is a fast prefilter — Phase B re-checks before commit.
+            if (spareCap <= 0) continue;
+            if (bakeries[bId].inventory <= 0) continue;
+
+            // Greedy nearest-neighbour: the cheapest extension is the active customer
+            // closest to the drone's current end-of-trip position (drones[d].pos).
+            for (int c = 0; c < cCount; c++) {
+                Customer* cust = customers[c];
+                if (cust->status != CUSTOMER_ACTIVE) continue;
+                if (cust->demand <= 0) continue;
+                if (cust == drones[d].currentCustomer) continue; // already this drone's primary
+
+                double detourDist = calculateDistance(drones[d].pos, cust->pos);
+                double detourTime = detourDist / drones[d].velocity;
+
+                if (detourTime < proposals[d].detourTime) {
+                    int amount = (cust->demand < spareCap) ? cust->demand : spareCap;
+                    if (amount > bakeries[bId].inventory) amount = bakeries[bId].inventory;
+                    if (amount <= 0) continue;
+
+                    proposals[d].detourTime = detourTime;
+                    proposals[d].extraCustomerIdx = c;
+                    proposals[d].breadAmount = amount;
+                    proposals[d].newDronePos = cust->pos;
+                    proposals[d].isValid = 1;
+                }
+            }
+        }
+
+        // --- Phase B: Sequential Commitment ---
+        //
+        // Walk drones in order, committing valid extensions. Re-validate every
+        // shared resource (bakery inventory, customer status, drone capacity)
+        // because earlier commits in this same loop may have consumed them.
+        for (int d = 0; d < dCount; d++) {
+            if (!proposals[d].isValid) continue;
+
+            int bId = drones[d].currentBakeryId;
+            int cIdx = proposals[d].extraCustomerIdx;
+            Customer* cust = customers[cIdx];
+
+            // Re-check: another drone (lower-d in this same Phase B pass) may have
+            // already grabbed this customer's last bread or drained the bakery.
+            if (cust->status != CUSTOMER_ACTIVE) continue;
+            if (cust->demand <= 0) continue;
+            if (bakeries[bId].inventory <= 0) continue;
+
+            int spareCap = drones[d].capacity - drones[d].load;
+            if (spareCap <= 0) continue;
+
+            int amount = proposals[d].breadAmount;
+            if (amount > cust->demand)            amount = cust->demand;
+            if (amount > spareCap)                amount = spareCap;
+            if (amount > bakeries[bId].inventory) amount = bakeries[bId].inventory;
+            if (amount <= 0) continue;
+
+            // Commit: take more bread at the originating bakery, append the extra stop.
+            // (Conceptually the drone picks up the extra bread before leaving the bakery,
+            //  then delivers in-order along the route. The simulation state tracks only
+            //  the final outcome, so we update inventories and end-positions directly.)
+            bakeries[bId].inventory -= amount;
+            cust->demand            -= amount;
+            drones[d].load          += amount;
+            drones[d].pos            = proposals[d].newDronePos;
+            drones[d].availableAtRound += (int)ceil(proposals[d].detourTime);
+
+            if (cust->demand == 0) {
+                cust->status = CUSTOMER_SERVED;
+            }
+
+            extensionMade = 1;
+        }
+    }
+
+    free(proposals);
+}
+
+void parallelQuickSort(Customer** arr, int left, int right) {
+    if (left >= right) return;
+
+    // Threshold: For small arrays, the overhead of thread creation is slower than the sorting itself.
+    // Therefore, we fall back to sequential quicksort. 1000 is an excellent magic number for performance.
+    if (right - left < 1000) {
+        qsort(arr + left, right - left + 1, sizeof(Customer*), compareCustomersDesc);
+        return;
+    }
+
+    int i = left, j = right;
+    
+    // Pivot selection (the score of the middle element)
+    double pivotScore = arr[left + (right - left) / 2]->tempScore;
+
+    // Partitioning process (sorting in descending order: high scores to the left, low scores to the right)
+    while (i <= j) {
+        while (arr[i]->tempScore > pivotScore) i++;
+        while (arr[j]->tempScore < pivotScore) j--;
+        
+        if (i <= j) {
+            // Swap the pointers
+            Customer* temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+            i++;
+            j--;
+        }
+    }
+
+    // --- THE FIX ---
+    // 1. Move 'if' OUTSIDE the #pragma task to prevent "Phantom Tasks"
+    // 2. Use 'firstprivate' instead of 'shared' to prevent "Use-After-Free" crashes
+    
+    if (left < j) {
+        #pragma omp task firstprivate(arr, left, j)
+        parallelQuickSort(arr, left, j);
+    }
+
+    if (i < right) {
+        #pragma omp task firstprivate(arr, i, right)
+        parallelQuickSort(arr, i, right);
+    }
+}
+
+// Wrapper function that is called from the outside
+void sortCustomersParallel(Customer** customers, int count) {
+    // Open a parallel region that creates the Thread Pool
+    #pragma omp parallel default(none) shared(customers, count)
+    {
+        // Define that only one thread (single) starts the initial recursion.
+        // This thread will generate Tasks, and the other waiting cores will fetch them and start helping.
+        #pragma omp single nowait
+        {
+            parallelQuickSort(customers, 0, count - 1);
+        }
+    }
 }

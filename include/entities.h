@@ -1,93 +1,62 @@
-// This header file contains the structs representing the different entities of the delivery system.
+#ifndef ENTITIES_H
+#define ENTITIES_H
 
-#ifndef FINAL_PROJECT_ENTITIES_H
-#define FINAL_PROJECT_ENTITIES_H
+typedef struct {
+    double x;
+    double y;
+} Position;
 
-// This enum represents the status of the customers
 typedef enum {
     CUSTOMER_ACTIVE,
     CUSTOMER_SERVED,
     CUSTOMER_DEPARTED
 } CustomerStatus;
 
-// This struct represents a point in R^2
 typedef struct {
-    double x;
-    double y;
-} Position;
-
-/*
- * Each bakery will have an array of Production Rules which will form the distribution it has to produce different
- * amount of bread each day
- */
-typedef struct {
+    int probability;
     int breadCount;
-    double probability;
 } ProductionRule;
 
-/*
- * This struct represent the bakeries in the system. Each bakery has an id, coordinates, current inventory, the
- * distribution function of number of breads per day, and maximal number of bread loaves it can hold.
- */
 typedef struct {
     int id;
     Position pos;
-    int inventory; // Current bread count
-
-    /*
-     * Each bakery has a distribution of how many breads it produces each day.
-     * The cumulativeProb array is an array of ProductionRules but instead of the probability being the probability to
-     * produce exactly this number of bread loaves, it represents the probability to receive this number of bread
-     * loaves, or another number which appears earlier in the array
-     */
+    int inventory;
+    int reservedInventory; // Accounting Ledger
+    int capacity;
+    int ruleCount;
+    unsigned int seed;
     ProductionRule* cumulativeProb;
-    int ruleCount; // Size of distribution array
-    int capacity; // Maximum number of bread loaves.
-    unsigned int seed; // The seed the bakery will use in order to generate the number of bread loaves
 } Bakery;
 
-// This struct represents the customer
 typedef struct {
     int id;
     Position pos;
-    int demand; // remaining bread demand
-    int priority; // Goes up by 1 in each round where the customer isn't served
+    int demand;
+    int reservedDemand;    // Accounting Ledger
+    int priority;
     CustomerStatus status;
     double closestBakeryDistance;
-    double tempScore; // Temporary score used for sorting customers in Stage 2
-    int distanceMatrixRow; // The row index in the distance matrix corresponding to this customer, set by calculateDistanceMatrix()
+    double tempScore;
+    int distanceMatrixRow;
 } Customer;
 
-// This struct represents a single drone
 typedef struct {
     int id;
-    int capacity; // How many bread loaves the drone can hold
-    int load; // Current bread load
-    int availableAtRound; // The round in which the drone will finish its task and will be free
     Position pos;
-    double velocity; // The speed in which the drone flies
-    Customer* currentCustomer; // The current (primary) customer it serves
-    /*
-     * The id of the bakery the drone is currently picking up from on its active trip, or -1 if idle.
-     * Used by extendTripsMultiCustomer (Stage 3.5) to know where the drone can grab additional bread
-     * to serve more customers on the same trip. Reset to -1 by updateDrones when the trip completes.
-     */
+    int load;              // Physical bread inside the drone
+    int plannedLoad;       // Accounting Ledger
+    int capacity;
+    double velocity;
+    int availableAtRound;
+    Customer* currentCustomer;
+    Customer* secondaryCustomer; // For physical multi-stop VRP routes
     int currentBakeryId;
 } Drone;
 
-// This struct represents the DroneBase, where all the drones spawn
 typedef struct {
     Position pos;
-    Drone* drones; // Has an array of all the drones
+    Drone* drones;
     int droneCount;
 } DroneBase;
 
-void initBakery(int id, Position pos, const ProductionRule* distribution, int ruleCount, int capacity, Bakery* bakery);
-void initCustomer(int id, Position pos, int demand, Customer* customer);
-void initDrone(int id, int capacity, int currentRound, Position pos, double velocity, Drone* drone);
-void initDroneBase(Position pos, DroneBase* droneBase);
-
-void freeBakery(const Bakery* bakery);
-void freeDroneBase(const DroneBase* droneBase);
-
-#endif //FINAL_PROJECT_ENTITIES_H
+#endif

@@ -6,195 +6,239 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <float.h>
+#include <string.h>
 
 void produceBread(Bakery* bakeries, int bakeryCount);
 void updateDrones(Drone* drones, int droneCount, int currentRound, Bakery* bakeries, int bakeryCount);
-void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount);
+void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount, int mockType);
 void findClosestBakery(Bakery* bakeries, int bCount, Customer** customers, int cCount, double** distanceMatrix);
 Bakery* closestBakeryToDrone(Bakery* bakeries, int bakeryCount, const Drone* drone, double* closestDistance);
 void idleDroneRepositioning(Bakery* bakeries, int bakeryCount, Drone* drone);
 
-// This function works in parallel, and is called at the start of every round. It produces the bread for the bakeries
 void produceBread(Bakery* bakeries, const int bakeryCount) {
-
-    // This function is embarrassingly parallelable. every bakery only works on its own
     #pragma omp parallel for default(none) shared(bakeries, bakeryCount)
     for (int i = 0; i < bakeryCount; i++) {
-
-        /*
-         * We will produce the bread like this:
-         * Because each bakery has its own distribution of bread production per day, and we have the cumulative
-         * probability for each different number of bread loaves, we will generate a random number between 0 and 1 and
-         * the number of bread loaves the bakery will produce will be the first element in the cumulativeProb array
-         * with probability at least the number we generated
-         */
-
         const int randomInteger = rand_r(&bakeries[i].seed);
-
-        // Dividing the integer we got by rand_max to get a number between 0 and 1
         const double random = (double) randomInteger / RAND_MAX;
 
-        // Now we iterate over the cumulativeProb array of the bakery and find the desired ProductionRule
         int j;
         for (j = 0; j < bakeries[i].ruleCount; j++) {
-            if (bakeries[i].cumulativeProb[j].probability >= random) {
-                break;
-            }
+            if (bakeries[i].cumulativeProb[j].probability >= random) break;
         }
-
-        // If the condition is never met, we set j to be the last rule
         if (j == bakeries[i].ruleCount) j = bakeries[i].ruleCount - 1;
 
-        // Now we know how much bread we need to produce
         const int breadProduction = bakeries[i].cumulativeProb[j].breadCount;
-
         const int newInventory = bakeries[i].inventory + breadProduction;
-
-        // We cannot exceed the capacity
         bakeries[i].inventory = (newInventory < bakeries[i].capacity) ? newInventory : bakeries[i].capacity;
     }
 }
 
-// This function is called at the end of stage 1, and it updates the position and availability of the drones
-void updateDrones(Drone* drones, const int droneCount, const int currentRound, Bakery* bakeries,
-    const int bakeryCount) {
-
-    // Iterating over the drones array and finding newly available drones
+void updateDrones(Drone* drones, const int droneCount, const int currentRound, Bakery* bakeries, const int bakeryCount) {
     #pragma omp parallel for default(none) shared(drones, droneCount, currentRound, bakeries, bakeryCount)
     for (int i = 0; i < droneCount; i++) {
-        Drone* drone = &drones[i]; // Current drone
+        Drone* drone = &drones[i];
 
-        /*
-         * If the current drone is now available, we set the current customer he serves to NULL and we bring the drone
-         * closer to a bakery!
-         */
+        // Leg 1: Fly to the Bakery First!
+        if (drone->currentBakeryId != -1) {
+            Bakery* bakery = &bakeries[drone->currentBakeryId];
+            double distance = calculateDistance(drone->pos, bakery->pos);
+
+            if (distance <= drone->velocity || distance < 0.0001) {
+                drone->pos = bakery->pos;
+                
+                // PHYSICAL TRANSFER FROM BAKERY TO DRONE
+                bakery->inventory -= drone->plannedLoad;
+                bakery->reservedInventory -= drone->plannedLoad;
+                drone->load = drone->plannedLoad;
+                
+                drone->currentBakeryId = -1; // Done with bakery leg
+            } else {
+                double ratio = drone->velocity / distance;
+                drone->pos.x += (bakery->pos.x - drone->pos.x) * ratio;
+                drone->pos.y += (bakery->pos.y - drone->pos.y) * ratio;
+            }
+            continue; // Wait until next round to fly to customer
+        }
+
+        // Leg 2 & 3: Fly to Customers
+        if (drone->currentCustomer != NULL) {
+            Customer* customer = drone->currentCustomer;
+            Position target = customer->pos;
+            double distance = calculateDistance(drone->pos, target);
+
+            if (distance <= drone->velocity || distance < 0.0001) {
+                drone->pos = target;
+
+                // PHYSICAL TRANSFER FROM DRONE TO CUSTOMER
+                int dropAmount = (drone->load > customer->demand) ? customer->demand : drone->load;
+                customer->demand -= dropAmount;
+                customer->reservedDemand -= dropAmount;
+                drone->load -= dropAmount;
+
+                if (customer->demand <= 0) {
+                    customer->demand = 0;
+                    customer->status = CUSTOMER_SERVED;
+                }
+
+                // Multi-stop routing
+                if (drone->secondaryCustomer != NULL) {
+                    drone->currentCustomer = drone->secondaryCustomer;
+                    drone->secondaryCustomer = NULL;
+                    continue; 
+                }
+
+                drone->currentCustomer = NULL;
+                drone->plannedLoad = 0;
+                drone->availableAtRound = currentRound;
+
+                idleDroneRepositioning(bakeries, bakeryCount, drone);
+                continue;
+            }
+
+            // Still flying
+            double ratio = drone->velocity / distance;
+            if (ratio > 1.0) ratio = 1.0;
+            drone->pos.x += (target.x - drone->pos.x) * ratio;
+            drone->pos.y += (target.y - drone->pos.y) * ratio;
+            continue;
+        }
+
+        // Idle drone moves slowly toward closest bakery
         if (drone->availableAtRound <= currentRound) {
             drone->availableAtRound = currentRound;
             drone->currentCustomer = NULL;
-            drone->currentBakeryId = -1; // Trip is over; no bakery is "active" for this drone
+            drone->secondaryCustomer = NULL;
+            drone->currentBakeryId = -1;
             drone->load = 0;
+            drone->plannedLoad = 0;
             idleDroneRepositioning(bakeries, bakeryCount, drone);
         }
     }
 }
 
-/*
- * This function receives a drone pointer and sets returns a pointer to the closest bakery to it, in order to get this
- * drone closer to it while having no customer to serve
- */
 Bakery* closestBakeryToDrone(Bakery* bakeries, const int bakeryCount, const Drone* drone, double* closestDistance) {
     double closest = DBL_MAX, currentDistance = DBL_MAX;
     Bakery* closestBakery = NULL, *currentBakery = NULL;
 
-    // This loop will be performed sequentially because we already paralleled the outer loop in update drones
     for (int i = 0; i < bakeryCount; i++) {
         currentBakery = &bakeries[i];
-
         currentDistance = calculateDistance(currentBakery->pos, drone->pos);
         if (currentDistance < closest) {
             closest = currentDistance;
             closestBakery = currentBakery;
         }
     }
-
     if (closestDistance) *closestDistance = closest;
-
     return closestBakery;
 }
 
-// This function receives an idle drone and shall get this drone one step closer to its closest bakery
 void idleDroneRepositioning(Bakery* bakeries, const int bakeryCount, Drone* drone) {
-
-    // First we find the closest bakery and the distance to it
     double closestDistance = 0.0;
-
     const Bakery* closestBakery = closestBakeryToDrone(bakeries, bakeryCount, drone, &closestDistance);
     if (closestBakery == NULL || closestDistance < 0) return;
 
-    // How much should the drone move (percentage wise) in the direction of the bakery
     double ratio = drone->velocity / closestDistance;
+    ratio = ratio <= 1 ? ratio : 1;
 
-    // We don't want the drone to pass the bakery
-    ratio = ratio <=1 ? ratio : 1;
-
-    // The difference in the x and y components
     const double dx = closestBakery->pos.x - drone->pos.x;
     const double dy = closestBakery->pos.y - drone->pos.y;
 
-    // Updating the drone position
     drone->pos.x += dx * ratio;
     drone->pos.y += dy * ratio;
 }
 
-// This function is a helper function that for checks, used to mock a city (bakeries, drones, customers, etc.)
-void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount) {
+void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
+                    Customer*** customers, int* cCount, int mockType) {
 
-    // 1 bakery, 2 drones, 2 customers
     *bCount = 1;
     *dCount = 2;
     *cCount = 2;
 
-    // Allocate the memory
     *bakeries = (Bakery*) malloc(sizeof(Bakery) * (*bCount));
     *drones = (Drone*) malloc(sizeof(Drone) * (*dCount));
-
-    // Allocate pointer array for customers
     *customers = (Customer**) malloc(sizeof(Customer*) * (*cCount));
 
-    if (*bakeries == NULL || *drones == NULL || *customers == NULL) exit(1);
+    if (*bakeries == NULL || *drones == NULL || *customers == NULL) {
+        exit(1);
+    }
 
-    // Made-up bakery stats
     (*bakeries)[0].id = 1;
-    (*bakeries)[0].pos.x = 0.0;
-    (*bakeries)[0].pos.y = 0.0;
+    (*bakeries)[0].pos.x = 100.0;
+    (*bakeries)[0].pos.y = 100.0;
     (*bakeries)[0].inventory = 0;
     (*bakeries)[0].capacity = 100;
     (*bakeries)[0].seed = 42;
     (*bakeries)[0].ruleCount = 1;
 
-    (*bakeries)[0].cumulativeProb = (ProductionRule*)malloc(sizeof(ProductionRule));
-    if ((*bakeries)[0].cumulativeProb == NULL) exit(1);
+    (*bakeries)[0].cumulativeProb = (ProductionRule*) malloc(sizeof(ProductionRule));
+    if ((*bakeries)[0].cumulativeProb == NULL) {
+        exit(1);
+    }
 
     (*bakeries)[0].cumulativeProb[0].probability = 1.0;
-    (*bakeries)[0].cumulativeProb[0].breadCount = 10;
+    (*bakeries)[0].cumulativeProb[0].breadCount = 8;
 
-    // Made-up drones stats
-    for(int i = 0; i < *dCount; i++) {
+    double droneStart[2][2] = {
+        {20.0, 20.0},
+        {180.0, 20.0}
+    };
+
+    for (int i = 0; i < *dCount; i++) {
         (*drones)[i].id = i + 1;
-        (*drones)[i].pos.x = 0.0;
-        (*drones)[i].pos.y = 0.0;
-        (*drones)[i].velocity = 2.0;
+        (*drones)[i].pos.x = droneStart[i][0];
+        (*drones)[i].pos.y = droneStart[i][1];
+        (*drones)[i].velocity = 8.0;
         (*drones)[i].capacity = 5;
+        (*drones)[i].load = 0;
         (*drones)[i].availableAtRound = 0;
         (*drones)[i].currentCustomer = NULL;
         (*drones)[i].currentBakeryId = -1;
     }
 
-    // Made-up customer-stats
-    for(int i = 0; i < *cCount; i++) {
+    double customerPositions[2][2] = {
+        {30.0, 185.0},
+        {175.0, 180.0}
+    };
+
+    int customerDemand[2];
+
+    if (mockType == 1) {
+        // Balanced: each customer can be served by one drone.
+        customerDemand[0] = 4;
+        customerDemand[1] = 4;
+    } else if (mockType == 2) {
+        // Split-order demo: customer 1 needs more than one drone capacity.
+        customerDemand[0] = 9;
+        customerDemand[1] = 2;
+    } else {
+        // Multi-stop demo: both customers have small demand.
+        customerDemand[0] = 2;
+        customerDemand[1] = 2;
+    }
+
+    for (int i = 0; i < *cCount; i++) {
         (*customers)[i] = (Customer*) malloc(sizeof(Customer));
-        if ((*customers)[i] == NULL) exit(1);
+        if ((*customers)[i] == NULL) {
+            exit(1);
+        }
 
         (*customers)[i]->id = i + 1;
-        (*customers)[i]->pos.x = (double)(i + 1) * 10.0;
-        (*customers)[i]->pos.y = 0.0;
+        (*customers)[i]->pos.x = customerPositions[i][0];
+        (*customers)[i]->pos.y = customerPositions[i][1];
         (*customers)[i]->priority = 1;
         (*customers)[i]->status = CUSTOMER_ACTIVE;
-        (*customers)[i]->demand = 5;
+        (*customers)[i]->demand = customerDemand[i];
+
+        // CRITICAL FIX:
+        // Without this, reservedDemand contains garbage like 3437936,
+        // so assignment thinks the customer is already over-reserved.
+        (*customers)[i]->reservedDemand = 0;
+
         (*customers)[i]->closestBakeryDistance = DBL_MAX;
         (*customers)[i]->tempScore = -1.0;
-        (*customers)[i]->distanceMatrixRow = -1; // Will be set by calculateDistanceMatrix()
+        (*customers)[i]->distanceMatrixRow = -1;
     }
 }
-
-/*
- * Stress-test scenario: simulates a city grid with:
- *   - 500 bakeries (different capacities & production distributions)
- *   - 1000 drones (varying speeds & capacities, deployed from 2 bases)
- *   - 2000 customers (scattered positions, varying demands)
- *
- * Positions are spread across a 200x200 coordinate space.
- */
 void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount) {
     *bCount = 500;
     *dCount = 50;
@@ -220,8 +264,9 @@ void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCoun
         (*bakeries)[i].pos.x = bDefs[bIdx].x;
         (*bakeries)[i].pos.y = bDefs[bIdx].y;
         (*bakeries)[i].inventory = 0;
+        (*bakeries)[i].reservedInventory = 0;
         (*bakeries)[i].capacity = bDefs[bIdx].capacity;
-        (*bakeries)[i].seed = 12345 + i; 
+        (*bakeries)[i].seed = 12345 + i;
         (*bakeries)[i].ruleCount = 3;
 
         (*bakeries)[i].cumulativeProb = (ProductionRule*)malloc(3 * sizeof(ProductionRule));
@@ -248,8 +293,11 @@ void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCoun
         (*drones)[i].pos.y = dDefs[dIdx].y;
         (*drones)[i].velocity = dDefs[dIdx].velocity;
         (*drones)[i].capacity = dDefs[dIdx].capacity;
+        (*drones)[i].load = 0;
+        (*drones)[i].plannedLoad = 0;
         (*drones)[i].availableAtRound = 0;
         (*drones)[i].currentCustomer = NULL;
+        (*drones)[i].secondaryCustomer = NULL;
         (*drones)[i].currentBakeryId = -1;
     }
 
@@ -262,7 +310,6 @@ void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCoun
         { 100.0,   5.0,  2 }, { 100.0, 195.0,  5 }, { 170.0, 185.0,  8 }, { 150.0, 190.0,  6 }
     };
 
-    // Use a fixed seed for reproducible randomness
     srand(9999);
     for (int i = 0; i < *cCount; i++) {
         int cIdx = i % 20;
@@ -270,36 +317,23 @@ void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCoun
         if ((*customers)[i] == NULL) exit(1);
 
         (*customers)[i]->id = i + 1;
-        // Adding random noise so customers don't stack on the exact same coordinate
         (*customers)[i]->pos.x = cDefs[cIdx].x + ((rand() % 10) - 5);
         (*customers)[i]->pos.y = cDefs[cIdx].y + ((rand() % 10) - 5);
         (*customers)[i]->priority = 1;
         (*customers)[i]->status = CUSTOMER_ACTIVE;
         (*customers)[i]->demand = cDefs[cIdx].demand;
+        (*customers)[i]->reservedDemand = 0;
         (*customers)[i]->closestBakeryDistance = DBL_MAX;
         (*customers)[i]->tempScore = -1.0;
         (*customers)[i]->distanceMatrixRow = -1;
     }
 }
 
-// This function computes the closest bakery to every customer.
-// Uses each customer's distanceMatrixRow field for correct matrix lookup after sorting.
-void findClosestBakery(Bakery* bakeries, const int bCount, Customer** customers, const int cCount,
-    double** distanceMatrix) {
-
-    /*
-     * We already have the distance matrix so we need to find the minimum distance for each customer.
-     * We use distanceMatrixRow for the correct row lookup, so this works even after qsort.
-     */
+void findClosestBakery(Bakery* bakeries, const int bCount, Customer** customers, const int cCount, double** distanceMatrix) {
     #pragma omp parallel for default(none) shared(cCount, bCount, distanceMatrix, bakeries, customers)
     for (int i = 0; i < cCount; i++) {
-
-        // Double-checking in case the field is not initialized
         customers[i]->closestBakeryDistance = DBL_MAX;
-
-        // Use stable row index instead of current array position
         int matrixRow = customers[i]->distanceMatrixRow;
-
         for (int j = 0; j < bCount; j++) {
             if (distanceMatrix[matrixRow][j] < customers[i]->closestBakeryDistance) {
                 customers[i]->closestBakeryDistance = distanceMatrix[matrixRow][j];
@@ -308,70 +342,148 @@ void findClosestBakery(Bakery* bakeries, const int bCount, Customer** customers,
     }
 }
 
-// ── Print helpers ──
+int main(int argc, char* argv[]) {
 
-void printBakeryStatus(Bakery* bakeries, int bCount) {
-    printf("  Bakeries: ");
-    for (int i = 0; i < bCount; i++) {
-        printf("B%d=%d/%d  ", bakeries[i].id, bakeries[i].inventory, bakeries[i].capacity);
-    }
-    printf("\n");
-}
+    // =========================================================================
+    // UI EXPORT MODE
+    // =========================================================================
+    if (argc > 1 && strcmp(argv[1], "--export") == 0) {
+        int maxRounds = 100;
 
-void printDroneStatus(Drone* drones, int dCount, int currentRound) {
-    int idle = 0, busy = 0;
-    for (int i = 0; i < dCount; i++) {
-        if (drones[i].currentCustomer == NULL) idle++;
-        else busy++;
-    }
-    printf("  Drones: %d idle, %d delivering\n", idle, busy);
-}
+        omp_set_dynamic(0);
+        omp_set_num_threads(omp_get_max_threads());
 
-void printCustomerSummary(Customer** customers, int cCount) {
-    int active = 0, served = 0, departed = 0;
-    int totalDemand = 0, totalPriority = 0;
-    for (int i = 0; i < cCount; i++) {
-        if (customers[i]->status == CUSTOMER_ACTIVE) {
-            active++;
-            totalDemand += customers[i]->demand;
-            totalPriority += customers[i]->priority;
+        Bakery* bakeries;
+        Drone* drones;
+        Customer** customers;
+        int bCount, dCount, cCount;
+
+        int mockType = 1;
+
+        if (argc > 2) {
+            if (strcmp(argv[2], "mock1") == 0) mockType = 1;
+            else if (strcmp(argv[2], "mock2") == 0) mockType = 2;
+            else if (strcmp(argv[2], "mock3") == 0) mockType = 3;
         }
-        else if (customers[i]->status == CUSTOMER_SERVED) served++;
-        else departed++;
-    }
-    printf("  Customers: %d active (demand=%d, avg_priority=%.1f), %d served, %d departed\n",
-           active, totalDemand,
-           active > 0 ? (double)totalPriority / active : 0.0,
-           served, departed);
-}
 
-int main() {
+        initSystemMock(&bakeries, &bCount, &drones, &dCount, &customers, &cCount, mockType);
+
+        double** distanceMatrix = calculateDistanceMatrix(bakeries, bCount, customers, cCount);
+        if (distanceMatrix == NULL) exit(1);
+
+        findClosestBakery(bakeries, bCount, customers, cCount, distanceMatrix);
+
+        FILE* jsonFile = fopen("state.json", "w");
+        if (jsonFile) fprintf(jsonFile, "[\n");
+
+        int t = 1;
+        while (t <= maxRounds) {
+            produceBread(bakeries, bCount);
+            updateDrones(drones, dCount, t, bakeries, bCount);
+
+            double avgVelocity = 0.0, avgCapacity = 0.0;
+            calculateDroneAverages(drones, dCount, &avgVelocity, &avgCapacity);
+            calculateCustomerScoresStage2(customers, cCount, avgVelocity, avgCapacity);
+            sortCustomersParallel(customers, cCount);
+
+            assignDronesStage3(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, t);
+            extendTripsMultiCustomer(customers, cCount, bakeries, bCount, drones, dCount, t);
+
+            updateCustomerPriorities(customers, cCount);
+            processCustomerTransitions(customers, cCount, t);
+
+            if (jsonFile != NULL) {
+                if (t > 1) fprintf(jsonFile, ",\n");
+                fprintf(jsonFile, "  {\n    \"round\": %d,\n", t);
+
+                fprintf(jsonFile, "    \"bakeries\": [\n");
+                for (int b = 0; b < bCount; b++) {
+                    fprintf(jsonFile, "      {\"id\": %d, \"pos\": {\"x\": %f, \"y\": %f}, \"inventory\": %d, \"reserved\": %d, \"capacity\": %d}%s\n",
+                        bakeries[b].id, bakeries[b].pos.x, bakeries[b].pos.y, bakeries[b].inventory, bakeries[b].reservedInventory, bakeries[b].capacity,
+                        (b == bCount - 1) ? "" : ",");
+                }
+                fprintf(jsonFile, "    ],\n");
+
+                fprintf(jsonFile, "    \"customers\": [\n");
+                for (int c = 0; c < cCount; c++) {
+                    fprintf(jsonFile, "      {\"id\": %d, \"pos\": {\"x\": %f, \"y\": %f}, \"demand\": %d, \"reserved\": %d, \"priority\": %d, \"status\": \"%s\"}%s\n",
+                        customers[c]->id, customers[c]->pos.x, customers[c]->pos.y, customers[c]->demand, customers[c]->reservedDemand, customers[c]->priority,
+                        (customers[c]->status == CUSTOMER_ACTIVE) ? "CUSTOMER_ACTIVE" :
+                        (customers[c]->status == CUSTOMER_SERVED) ? "CUSTOMER_SERVED" : "CUSTOMER_DEPARTED",
+                        (c == cCount - 1) ? "" : ",");
+                }
+                fprintf(jsonFile, "    ],\n");
+
+                fprintf(jsonFile, "    \"drones\": [\n");
+                for (int d = 0; d < dCount; d++) {
+                    fprintf(jsonFile,
+                        "      {\"id\": %d, \"pos\": {\"x\": %f, \"y\": %f}, "
+                        "\"load\": %d, \"capacity\": %d, \"availableAtRound\": %d, "
+                        "\"status\": \"%s\", \"targetCustomerId\": %d, \"currentBakeryId\": %d}%s\n",
+                        drones[d].id,
+                        drones[d].pos.x,
+                        drones[d].pos.y,
+                        drones[d].load, // This is now 100% physical!
+                        drones[d].capacity,
+                        drones[d].availableAtRound,
+                        drones[d].currentCustomer == NULL ? "IDLE" : "DELIVERING",
+                        drones[d].currentCustomer == NULL ? -1 : drones[d].currentCustomer->id,
+                        drones[d].currentBakeryId,
+                        (d == dCount - 1) ? "" : ","
+                    );
+                }
+                fprintf(jsonFile, "    ]\n  }");
+            }
+
+            int allDeparted = 1;
+            for (int j = 0; j < cCount; j++) {
+                if (customers[j]->status != CUSTOMER_DEPARTED) {
+                    allDeparted = 0;
+                    break;
+                }
+            }
+            if (allDeparted) break;
+
+            t++;
+        }
+
+        if (jsonFile != NULL) {
+            fprintf(jsonFile, "\n]\n");
+            fclose(jsonFile);
+        }
+
+        freeDistanceMatrix(distanceMatrix, cCount);
+        for (int b = 0; b < bCount; b++) free(bakeries[b].cumulativeProb);
+        free(bakeries);
+        free(drones);
+        for (int c = 0; c < cCount; c++) free(customers[c]);
+        free(customers);
+
+        return 0;
+    }
+
+    // =========================================================================
+    // STRESS BENCHMARK MODE
+    // =========================================================================
     printf("==================================================\n");
     printf("   DRONE DELIVERY SIMULATION - STRESS BENCHMARK   \n");
     printf("==================================================\n");
-    
-    //threadCounts is the array of different thread counts we want to test, and numTests is the number of different tests we will run
-    int threadCounts[] = {1, 32, 64};
+
+    int threadCounts[] = {1, 6, 12};
     int numTests = sizeof(threadCounts) / sizeof(threadCounts[0]);
-    int maxRounds = 10; // Maximum number of rounds to simulate in each test, can be adjusted based on desired test duration and complexity
+    int maxRounds = 10;
     printf("+---------+--------------+----------+\n");
     printf("| Threads | Time (sec)   | Speedup  |\n");
     printf("+---------+--------------+----------+\n");
 
-    double baseTime = 0.0; // Will store the time of the sequential run (Thread 1)
+    double baseTime = 0.0;
 
     for (int i = 0; i < numTests; i++) {
         int threads = threadCounts[i];
 
-        // Disable dynamic adjustment of threads
         omp_set_dynamic(0);
-
-        // Force the specific number of threads
         omp_set_num_threads(threads);
-    
-        // ... the rest of your benchmark loop ...
 
-        // reset the random seed for reproducibility in each test
         Bakery* bakeries;
         Drone* drones;
         Customer** customers;
@@ -387,43 +499,25 @@ int main() {
 
         findClosestBakery(bakeries, bCount, customers, cCount, distanceMatrix);
 
-        // start the timer!
         double startTime = omp_get_wtime();
 
         int t = 1;
         while (t <= maxRounds) {
-           // removed all the printfs from the main loop to avoid garbled output and focus on timing and speedup results 
-            // printf("── Round %d ──\n", t);
-
-            // Stage 1: Production & drone updates
             produceBread(bakeries, bCount);
             updateDrones(drones, dCount, t, bakeries, bCount);
-            
-            // printBakeryStatus(bakeries, bCount);
-            // printDroneStatus(drones, dCount, t);
 
-            // Stage 2: Scoring & sorting
             double avgVelocity = 0.0, avgCapacity = 0.0;
             calculateDroneAverages(drones, dCount, &avgVelocity, &avgCapacity);
             calculateCustomerScoresStage2(customers, cCount, avgVelocity, avgCapacity);
 
-            //sorting the customers by their tempScore in descending order, using a parallel quicksort
             sortCustomersParallel(customers, cCount);
 
-            // Stage 3: Drone assignment
             assignDronesStage3(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, t);
-
-            // Stage 3.5: Multi-customer trip extension — let busy drones piggyback nearby
-            // active customers onto the same trip while they still have spare capacity.
             extendTripsMultiCustomer(customers, cCount, bakeries, bCount, drones, dCount, t);
 
-            // Stage 4: Transitions
             updateCustomerPriorities(customers, cCount);
             processCustomerTransitions(customers, cCount, t);
-            
-            // printCustomerSummary(customers, cCount);
 
-            // check if all customers are departed, if so, we can end the simulation early
             int allDeparted = 1;
             for (int j = 0; j < cCount; j++) {
                 if (customers[j]->status != CUSTOMER_DEPARTED) {
@@ -431,26 +525,18 @@ int main() {
                     break;
                 }
             }
-            if (allDeparted) {
-                break;
-            }
+            if (allDeparted) break;
 
             t++;
         }
 
-        // stop the clock!
         double elapsed = omp_get_wtime() - startTime;
 
-        // calculate speedup compared to the single-threaded baseline
-        if (i == 0) {
-            baseTime = elapsed; // Set the baseline time for single-threaded execution
-        }
+        if (i == 0) baseTime = elapsed;
         double speedup = baseTime / elapsed;
 
-        // Print results for the current thread count
         printf("| %-7d | %-12.4f | %-8.2fx |\n", threads, elapsed, speedup);
 
-        // Clean up memory for the current test before the next iteration
         freeDistanceMatrix(distanceMatrix, cCount);
         for (int b = 0; b < bCount; b++) free(bakeries[b].cumulativeProb);
         free(bakeries);

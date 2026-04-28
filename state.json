@@ -1,0 +1,1010 @@
+[
+  {
+    "round": 1,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 8, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 2, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 2, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 25.656854, "y": 25.656854}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 174.343146, "y": 25.656854}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 2,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 16, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 3, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 3, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 31.313708, "y": 31.313708}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 168.686292, "y": 31.313708}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 3,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 24, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 4, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 4, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 36.970563, "y": 36.970563}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 163.029437, "y": 36.970563}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 4,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 32, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 5, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 5, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 42.627417, "y": 42.627417}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 157.372583, "y": 42.627417}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 5,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 40, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 6, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 6, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 48.284271, "y": 48.284271}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 151.715729, "y": 48.284271}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 6,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 48, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 7, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 7, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 53.941125, "y": 53.941125}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 146.058875, "y": 53.941125}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 7,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 56, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 8, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 8, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 59.597980, "y": 59.597980}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 140.402020, "y": 59.597980}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 8,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 64, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 9, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 9, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 65.254834, "y": 65.254834}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 134.745166, "y": 65.254834}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 9,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 72, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 10, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 10, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 70.911688, "y": 70.911688}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 129.088312, "y": 70.911688}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 10,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 80, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 11, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 11, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 76.568542, "y": 76.568542}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 123.431458, "y": 76.568542}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 11,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 88, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 12, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 12, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 82.225397, "y": 82.225397}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 117.774603, "y": 82.225397}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 12,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 96, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 13, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 13, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 87.882251, "y": 87.882251}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 112.117749, "y": 87.882251}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 13,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 14, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 14, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 93.539105, "y": 93.539105}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 106.460895, "y": 93.539105}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 14,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 7, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 15, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 15, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 99.195959, "y": 99.195959}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 100.804041, "y": 99.195959}, "load": 0, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 15,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 93, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 16, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 16, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 16,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 17, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 17, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 105.471529, "y": 105.836298}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 94.914342, "y": 106.175442}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 17,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 18, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 18, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 110.943058, "y": 111.672595}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 89.828684, "y": 112.350884}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 18,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 19, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 19, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 116.414587, "y": 117.508893}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 84.743026, "y": 118.526326}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 19,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 20, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 20, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 121.886116, "y": 123.345191}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 79.657368, "y": 124.701768}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 20,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 21, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 21, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 127.357645, "y": 129.181488}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 74.571710, "y": 130.877209}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 21,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 22, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 22, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 132.829174, "y": 135.017786}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 69.486052, "y": 137.052651}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 22,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 23, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 23, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 138.300703, "y": 140.854083}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 64.400394, "y": 143.228093}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 23,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 24, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 24, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 143.772232, "y": 146.690381}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 59.314736, "y": 149.403535}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 24,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 25, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 25, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 149.243761, "y": 152.526679}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 54.229078, "y": 155.578977}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 25,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 26, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 26, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 154.715290, "y": 158.362976}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 49.143420, "y": 161.754419}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 26,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 27, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 27, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 160.186819, "y": 164.199274}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 44.057762, "y": 167.929861}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 27,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 28, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 28, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 165.658348, "y": 170.035572}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 38.972104, "y": 174.105303}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 28,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 2, "reserved": 2, "priority": 29, "status": "CUSTOMER_ACTIVE"},
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 9, "reserved": 5, "priority": 29, "status": "CUSTOMER_ACTIVE"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 171.129877, "y": 175.871869}, "load": 2, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 2, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 33.886446, "y": 180.280745}, "load": 5, "capacity": 5, "availableAtRound": 28, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 29,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 30, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 169.528471, "y": 174.163702}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 35.085658, "y": 178.824558}, "load": 0, "capacity": 5, "availableAtRound": 29, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 30,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 31, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 164.056942, "y": 168.327405}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 40.171316, "y": 172.649116}, "load": 0, "capacity": 5, "availableAtRound": 30, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 31,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 32, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 158.585413, "y": 162.491107}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 45.256974, "y": 166.473674}, "load": 0, "capacity": 5, "availableAtRound": 31, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 32,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 33, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 153.113884, "y": 156.654809}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 50.342632, "y": 160.298232}, "load": 0, "capacity": 5, "availableAtRound": 32, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 33,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 34, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 147.642355, "y": 150.818512}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 55.428290, "y": 154.122791}, "load": 0, "capacity": 5, "availableAtRound": 33, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 34,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 35, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 142.170826, "y": 144.982214}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 60.513948, "y": 147.947349}, "load": 0, "capacity": 5, "availableAtRound": 34, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 35,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 36, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 136.699297, "y": 139.145917}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 65.599606, "y": 141.771907}, "load": 0, "capacity": 5, "availableAtRound": 35, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 36,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 37, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 131.227768, "y": 133.309619}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 70.685264, "y": 135.596465}, "load": 0, "capacity": 5, "availableAtRound": 36, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 37,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 38, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 125.756239, "y": 127.473321}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 75.770922, "y": 129.421023}, "load": 0, "capacity": 5, "availableAtRound": 37, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 38,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 39, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 120.284710, "y": 121.637024}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 80.856580, "y": 123.245581}, "load": 0, "capacity": 5, "availableAtRound": 38, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 39,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 40, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 114.813181, "y": 115.800726}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 85.942238, "y": 117.070139}, "load": 0, "capacity": 5, "availableAtRound": 39, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 40,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 41, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 109.341652, "y": 109.964428}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 91.027896, "y": 110.894697}, "load": 0, "capacity": 5, "availableAtRound": 40, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 41,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 4, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 42, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 103.870123, "y": 104.128131}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0},
+      {"id": 2, "pos": {"x": 96.113554, "y": 104.719255}, "load": 0, "capacity": 5, "availableAtRound": 41, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 42,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 96, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 43, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 42, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 43,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 44, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 94.914342, "y": 106.175442}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 43, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 44,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 45, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 89.828684, "y": 112.350884}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 44, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 45,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 46, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 84.743026, "y": 118.526326}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 45, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 46,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 47, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 79.657368, "y": 124.701768}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 46, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 47,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 48, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 74.571710, "y": 130.877209}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 47, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 48,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 49, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 69.486052, "y": 137.052651}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 48, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 49,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 50, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 64.400394, "y": 143.228093}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 49, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 50,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 51, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 59.314736, "y": 149.403535}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 50, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 51,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 52, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 54.229078, "y": 155.578977}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 51, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 52,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 53, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 49.143420, "y": 161.754419}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 52, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 53,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 54, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 44.057762, "y": 167.929861}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 53, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 54,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 55, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 38.972104, "y": 174.105303}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 54, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 55,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 4, "reserved": 4, "priority": 56, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 33.886446, "y": 180.280745}, "load": 4, "capacity": 5, "availableAtRound": 56, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 55, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 56,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 0, "priority": 1, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 35.085658, "y": 178.824558}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 56, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 57,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 2, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 2, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 40.171316, "y": 172.649116}, "load": 0, "capacity": 5, "availableAtRound": 57, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": 0}
+    ]
+  },
+  {
+    "round": 58,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 98, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 3, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 45.256974, "y": 166.473674}, "load": 0, "capacity": 5, "availableAtRound": 58, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 100.000000, "y": 100.000000}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 59,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 4, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 50.342632, "y": 160.298232}, "load": 0, "capacity": 5, "availableAtRound": 59, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 94.914342, "y": 106.175442}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 60,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 5, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 55.428290, "y": 154.122791}, "load": 0, "capacity": 5, "availableAtRound": 60, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 89.828684, "y": 112.350884}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 61,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 6, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 60.513948, "y": 147.947349}, "load": 0, "capacity": 5, "availableAtRound": 61, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 84.743026, "y": 118.526326}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 62,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 7, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 65.599606, "y": 141.771907}, "load": 0, "capacity": 5, "availableAtRound": 62, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 79.657368, "y": 124.701768}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 63,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 8, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 70.685264, "y": 135.596465}, "load": 0, "capacity": 5, "availableAtRound": 63, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 74.571710, "y": 130.877209}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 64,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 9, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 75.770922, "y": 129.421023}, "load": 0, "capacity": 5, "availableAtRound": 64, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 69.486052, "y": 137.052651}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 65,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 10, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 80.856580, "y": 123.245581}, "load": 0, "capacity": 5, "availableAtRound": 65, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 64.400394, "y": 143.228093}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 66,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 11, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 85.942238, "y": 117.070139}, "load": 0, "capacity": 5, "availableAtRound": 66, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 59.314736, "y": 149.403535}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 67,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 12, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 91.027896, "y": 110.894697}, "load": 0, "capacity": 5, "availableAtRound": 67, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 54.229078, "y": 155.578977}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 68,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 13, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 96.113554, "y": 104.719255}, "load": 0, "capacity": 5, "availableAtRound": 68, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 49.143420, "y": 161.754419}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 69,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 14, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 69, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 44.057762, "y": 167.929861}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 70,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 15, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 70, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 38.972104, "y": 174.105303}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 71,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 2, "reserved": 2, "priority": 16, "status": "CUSTOMER_ACTIVE"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 71, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 33.886446, "y": 180.280745}, "load": 2, "capacity": 5, "availableAtRound": 71, "status": "DELIVERING", "targetCustomerId": 1, "currentBakeryId": -1}
+    ]
+  },
+  {
+    "round": 72,
+    "bakeries": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "inventory": 100, "reserved": 0, "capacity": 100}
+    ],
+    "customers": [
+      {"id": 1, "pos": {"x": 30.000000, "y": 185.000000}, "demand": 0, "reserved": 0, "priority": 16, "status": "CUSTOMER_DEPARTED"},
+      {"id": 2, "pos": {"x": 175.000000, "y": 180.000000}, "demand": 0, "reserved": 0, "priority": 29, "status": "CUSTOMER_DEPARTED"}
+    ],
+    "drones": [
+      {"id": 1, "pos": {"x": 100.000000, "y": 100.000000}, "load": 0, "capacity": 5, "availableAtRound": 72, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1},
+      {"id": 2, "pos": {"x": 35.085658, "y": 178.824558}, "load": 0, "capacity": 5, "availableAtRound": 72, "status": "IDLE", "targetCustomerId": -1, "currentBakeryId": -1}
+    ]
+  }
+]

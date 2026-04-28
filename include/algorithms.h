@@ -13,7 +13,9 @@ void processCustomerTransitions(Customer** customers, int customerCount, int cur
 void calculateDroneAverages(Drone* drones, int droneCount, double* avgVelocity, double* avgCapacity);
 void calculateCustomerScoresStage2(Customer** customers, int cCount, double avgVelocity, double avgCapacity);
 
-void rebuildCustomerLedger(Customer** customers, int cCount, Drone* drones, int dCount);
+// NEW: The Reactive Ledger
+void rebuildCustomerLedger(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount);
+
 int assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, double** distanceMatrix, int currentRound);
 int extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, int currentRound);
 

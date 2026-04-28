@@ -67,12 +67,35 @@ void updateDrones(Drone* drones, const int droneCount, const int currentRound, B
         // Leg 2: Fly the Static Route Queue
         if (drone->routeCount > 0 && drone->currentRouteIdx < drone->routeCount) {
             Customer* customer = drone->route[drone->currentRouteIdx];
+            
+            // ====================================================
+            // THE FIX: IN-FLIGHT ABORT
+            // Check every round if the goal still exists!
+            // ====================================================
+            if (customer->demand <= 0 || customer->status != CUSTOMER_ACTIVE) {
+                // Target is gone! Skip this stop in mid-air.
+                drone->currentRouteIdx++;
+                
+                // If there are no stops left, cancel the whole trip
+                if (drone->currentRouteIdx >= drone->routeCount) {
+                    drone->routeCount = 0;
+                    drone->currentRouteIdx = 0;
+                    drone->plannedLoad = 0;
+                    drone->load = 0; // Dump the unnecessary bread
+                    drone->availableAtRound = currentRound;
+                    idleDroneRepositioning(bakeries, bakeryCount, drone);
+                }
+                continue; // Wait until next round to redirect
+            }
+
             Position target = customer->pos;
             double distance = calculateDistance(drone->pos, target);
 
+            // Arrived at the customer
             if (distance <= drone->velocity || distance < 0.0001) {
                 drone->pos = target;
 
+                // Drone drops bread and doesn't touch the customer's ledger!
                 int dropAmount = (drone->load > customer->demand) ? customer->demand : drone->load;
                 customer->demand -= dropAmount;
                 drone->load -= dropAmount;
@@ -88,13 +111,14 @@ void updateDrones(Drone* drones, const int droneCount, const int currentRound, B
                     drone->routeCount = 0;
                     drone->currentRouteIdx = 0;
                     drone->plannedLoad = 0;
-                    drone->load = 0; // Discard leftover stolen bread
+                    drone->load = 0; // Dump stolen leftover bread
                     drone->availableAtRound = currentRound;
                     idleDroneRepositioning(bakeries, bakeryCount, drone);
                 }
                 continue;
             }
 
+            // Still flying towards the active customer
             double ratio = drone->velocity / distance;
             if (ratio > 1.0) ratio = 1.0;
             drone->pos.x += (target.x - drone->pos.x) * ratio;
@@ -102,6 +126,7 @@ void updateDrones(Drone* drones, const int droneCount, const int currentRound, B
             continue;
         }
 
+        // Idle drone moves slowly toward closest bakery
         if (drone->availableAtRound <= currentRound) {
             drone->availableAtRound = currentRound;
             drone->routeCount = 0;
@@ -145,17 +170,11 @@ void idleDroneRepositioning(Bakery* bakeries, const int bakeryCount, Drone* dron
     drone->pos.y += dy * ratio;
 }
 
-void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
-                    Customer*** customers, int* cCount, int mockType) {
-
+void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount, int mockType) {
     if (mockType == 4) {
-        *bCount = 2;
-        *dCount = 4;
-        *cCount = 5;
+        *bCount = 2; *dCount = 4; *cCount = 5;
     } else {
-        *bCount = 1;
-        *dCount = 2;
-        *cCount = 2;
+        *bCount = 1; *dCount = 2; *cCount = 2;
     }
 
     *bakeries = (Bakery*) malloc(sizeof(Bakery) * (*bCount));
@@ -430,10 +449,10 @@ int main(int argc, char* argv[]) {
             sortCustomersParallel(customers, cCount);
 
             // ====================================================
-            // THE REACTIVE LEDGER UPDATE
+            // THE NEW REACTIVE LEDGER UPDATE
             // Rebuilds reality before assigning drones
             // ====================================================
-            rebuildCustomerLedger(customers, cCount, drones, dCount);
+            rebuildCustomerLedger(customers, cCount, bakeries, bCount, drones, dCount);
 
             int routingActive = 1;
             while (routingActive) {
@@ -568,7 +587,7 @@ int main(int argc, char* argv[]) {
 
             sortCustomersParallel(customers, cCount);
 
-            rebuildCustomerLedger(customers, cCount, drones, dCount);
+            rebuildCustomerLedger(customers, cCount, bakeries, bCount, drones, dCount);
 
             int routingActive = 1;
             while (routingActive) {

@@ -116,22 +116,32 @@ void calculateCustomerScoresStage2(Customer** customers, int cCount, double avgV
 
 // ====================================================================
 // THE REACTIVE LEDGER
-// Completely eliminates permanent locks by rebuilding reality every round
+// Prevents permanent ghost locks by recalculating reality every round
 // ====================================================================
-void rebuildCustomerLedger(Customer** customers, int cCount, Drone* drones, int dCount) {
+void rebuildCustomerLedger(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount) {
+    // 1. Wipe everything clean
     for (int c = 0; c < cCount; c++) customers[c]->reservedDemand = 0;
+    for (int b = 0; b < bCount; b++) bakeries[b].reservedInventory = 0;
     
+    // 2. Find max fleet velocity
     double maxVel = 0.1;
     for (int d = 0; d < dCount; d++) {
         if (drones[d].velocity > maxVel) maxVel = drones[d].velocity;
     }
     
+    // 3. Rebuild based on actual drone physical reality
     for (int d = 0; d < dCount; d++) {
         if (drones[d].routeCount == 0) continue;
         
-        // BACKUP COURIER CHECK: Slow drones carry bread, but stay off the books!
+        // Bakeries MUST track inventory for all drones, otherwise slow drones steal ghost bread
+        if (drones[d].currentBakeryId != -1) {
+            bakeries[drones[d].currentBakeryId].reservedInventory += drones[d].plannedLoad;
+        }
+        
+        // BACKUP CHECK: Slow drones carry bread, but stay entirely off the customer books!
         if (drones[d].velocity < maxVel * 0.5) continue; 
         
+        // Fast drones securely lock their customers
         int breadAvailable = (drones[d].currentBakeryId != -1) ? drones[d].plannedLoad : drones[d].load;
         for (int i = drones[d].currentRouteIdx; i < drones[d].routeCount; i++) {
             Customer* cust = drones[d].route[i];
@@ -172,7 +182,6 @@ int assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int b
 
     int matchMade = 0;
 
-    // --- PHASE 1 ---
     #pragma omp parallel for default(none) shared(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, droneBakeryDist, proposals)
     for (int c = 0; c < cCount; c++) {
         proposals[c].isValid = 0;
@@ -203,7 +212,6 @@ int assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int b
         }
     }
 
-    // --- PHASE 2 ---
     double maxVel = 0.1;
     for (int i = 0; i < dCount; i++) if (drones[i].velocity > maxVel) maxVel = drones[i].velocity;
 
@@ -252,7 +260,7 @@ int assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int b
 
             int isBackup = (drones[dId].velocity < maxVel * 0.5);
             if (!isBackup) {
-                customers[c]->reservedDemand += breadToTake;
+                customers[c]->reservedDemand += breadToTake; // Reserve for this round's while-loop
             }
 
             int timeTaken = (int)ceil(proposals[c].bestTime);
@@ -294,8 +302,8 @@ int extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries,
         if (drones[d].routeCount == 0 || drones[d].routeCount >= MAX_ROUTE_STOPS) continue; 
         if (drones[d].currentBakeryId < 0) continue; 
 
-        // Backups are not allowed to multi-stop. They are too unpredictable!
-        int isBackup = (drones[d].velocity < maxVel * 0.25);
+        // CRITICAL FIX: Backups are banned from multi-stop routes! They are too unpredictable.
+        int isBackup = (drones[d].velocity < maxVel * 0.3);
         if (isBackup) continue;
 
         int bId = drones[d].currentBakeryId;
@@ -342,7 +350,6 @@ int extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries,
         }
     }
 
-    // Phase 2: Sequential Commit
     for (int d = 0; d < dCount; d++) {
         if (!proposals[d].isValid) continue;
 
@@ -363,8 +370,8 @@ int extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries,
         if (amount <= 0) continue;
 
         bakeries[bId].reservedInventory += amount;
-        cust->reservedDemand    += amount; 
-        drones[d].plannedLoad   += amount;
+        cust->reservedDemand += amount; // We know it's not a backup because they were skipped!
+        drones[d].plannedLoad += amount;
         
         drones[d].route[drones[d].routeCount] = cust;
         drones[d].routeCount++;

@@ -1,67 +1,22 @@
 #ifndef ALGORITHMS_H
 #define ALGORITHMS_H
 
-#include "entities.h" 
+#include "entities.h"
 
-// This header file contains the function prototypes for the algorithms used in the delivery system.
-
-// Calculate Euclidean distance (Pythagorean theorem)
 double calculateDistance(Position p1, Position p2);
-
-// Calculate flight time according to the formula t = d / v
 double calculateFlightTime(double distance, double velocity);
-
-// Update the priorities of customers based on whether they have been served or not
 void updateCustomerPriorities(Customer** customers, int customerCount);
-
-// Calculates the priority-aware optimization score for a customer-drone assignment
 double calculateCustomerScore(int priority, double estimatedTime);
-
-// Creates and computes a 2D distance matrix [Customer][Bakery] in parallel
 double** calculateDistanceMatrix(Bakery* bakeries, int bakeryCount, Customer** customers, int customerCount);
-
-// Builds a mapping from customer ID to their original row index in the distance matrix
-int* buildIdToRowMap(Customer* customers, int customerCount, int maxId);
-
-// Frees the memory allocated for the distance matrix
 void freeDistanceMatrix(double** matrix, int customerCount);
-
-// Processes customers who have been served, deciding if they leave or order again
-void processCustomerTransitions(Customer** customers, int customerCount,int currentRound);
-
-// Comparison function for qsort to sort customers in descending order based on their tempScore
-int compareCustomersDesc(const void* a, const void* b);
-
-// Calculates the average velocity and capacity of the fleet of drones
+void processCustomerTransitions(Customer** customers, int customerCount, int currentRound);
 void calculateDroneAverages(Drone* drones, int droneCount, double* avgVelocity, double* avgCapacity);
-
-// Calculates the heuristic score for each active customer and stores it in their tempScore field.
 void calculateCustomerScoresStage2(Customer** customers, int cCount, double avgVelocity, double avgCapacity);
 
-// Assigns drones to customers, planning the route and updating inventory
-void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, double** distanceMatrix, int currentRound);
+void rebuildCustomerLedger(Customer** customers, int cCount, Drone* drones, int dCount);
+int assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, double** distanceMatrix, int currentRound);
+int extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, int currentRound);
 
-/*
- * Stage 3.5 — Multi-Customer Trip Extension.
- *
- * After assignDronesStage3 has matched each free drone to a primary customer
- * (one trip = drone -> bakery -> primary_customer), this function piggybacks
- * additional nearby customers onto those trips when the drone has spare
- * capacity AND the same bakery still has inventory. The drone picks up the
- * extra bread at the same bakery before leaving and delivers to the extra
- * customers in nearest-neighbour order along the route.
- *
- * Parallelism follows the same two-phase, barrier-synchronized pattern used
- * by assignDronesStage3:
- *   - Phase A (parallel over drones): each busy drone independently scans
- *     active customers and proposes the best (smallest detour) candidate.
- *   - Phase B (sequential): proposals are committed in order, re-checking
- *     bakery inventory and customer state to avoid races.
- * The whole thing loops until no more extensions are possible.
- */
-void extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, int currentRound);
-
-//sorts customers in parallel based on their tempScore field, in descending order
 void sortCustomersParallel(Customer** customers, int count);
 
 #endif

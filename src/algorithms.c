@@ -59,18 +59,15 @@ void processCustomerTransitions(Customer** customers, int customerCount, int cur
     #pragma omp parallel for default(none) shared(customers, customerCount, currentRound)
     for (int i = 0; i < customerCount; i++) {
         if (customers[i]->status == CUSTOMER_SERVED) {
-            
             unsigned int local_seed = (unsigned int)time(NULL) ^ omp_get_thread_num() ^ customers[i]->id ^ (unsigned int)currentRound;
             int randomInteger = rand_r(&local_seed);
             double randomProb = (double)randomInteger / RAND_MAX;
 
             if (randomProb < 0.5) {
-                // 80% chance to leave forever
                 customers[i]->status = CUSTOMER_DEPARTED;
                 customers[i]->demand = 0;
                 customers[i]->reservedDemand = 0;
             } else {
-                // 20% chance to stay and order MORE bread!
                 customers[i]->status = CUSTOMER_ACTIVE;
                 customers[i]->demand = (rand_r(&local_seed) % 5) + 1; 
                 customers[i]->reservedDemand = 0; 
@@ -106,7 +103,6 @@ void calculateCustomerScoresStage2(Customer** customers, int cCount, double avgV
             customers[i]->tempScore = -1.0;
             continue;
         }
-
         double d_min = customers[i]->closestBakeryDistance;
         double t_base = d_min / avgVelocity;
         if (t_base <= 0.0) t_base = 0.1;
@@ -114,8 +110,41 @@ void calculateCustomerScoresStage2(Customer** customers, int cCount, double avgV
         double q_c = (double)customers[i]->demand;
         double n_trips = ceil(q_c / avgCapacity);
         double t_c = t_base * n_trips;
-
         customers[i]->tempScore = customers[i]->priority / t_c;
+    }
+}
+
+// ====================================================================
+// THE REACTIVE LEDGER
+// Completely eliminates permanent locks by rebuilding reality every round
+// ====================================================================
+void rebuildCustomerLedger(Customer** customers, int cCount, Drone* drones, int dCount) {
+    for (int c = 0; c < cCount; c++) customers[c]->reservedDemand = 0;
+    
+    double maxVel = 0.1;
+    for (int d = 0; d < dCount; d++) {
+        if (drones[d].velocity > maxVel) maxVel = drones[d].velocity;
+    }
+    
+    for (int d = 0; d < dCount; d++) {
+        if (drones[d].routeCount == 0) continue;
+        
+        // BACKUP COURIER CHECK: Slow drones carry bread, but stay off the books!
+        if (drones[d].velocity < maxVel * 0.5) continue; 
+        
+        int breadAvailable = (drones[d].currentBakeryId != -1) ? drones[d].plannedLoad : drones[d].load;
+        for (int i = drones[d].currentRouteIdx; i < drones[d].routeCount; i++) {
+            Customer* cust = drones[d].route[i];
+            if (cust->status != CUSTOMER_ACTIVE) continue;
+            
+            int needed = cust->demand - cust->reservedDemand;
+            if (needed <= 0) continue;
+            
+            int allocate = (breadAvailable > needed) ? needed : breadAvailable;
+            cust->reservedDemand += allocate;
+            breadAvailable -= allocate;
+            if (breadAvailable <= 0) break;
+        }
     }
 }
 
@@ -124,9 +153,9 @@ typedef struct {
     int droneId;
     double bestTime;
     int isValid;
-} Proposal;
+} __attribute__((aligned(64))) Proposal;
 
-void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, double** distanceMatrix, int currentRound) {
+int assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, double** distanceMatrix, int currentRound) {
     double** droneBakeryDist = malloc(dCount * sizeof(double*));
     if (droneBakeryDist == NULL) exit(1);
 
@@ -141,89 +170,103 @@ void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int 
     Proposal* proposals = malloc(cCount * sizeof(Proposal));
     if (proposals == NULL) exit(1);
 
-    int matchMade = 1;
-    while (matchMade) {
-        matchMade = 0;
+    int matchMade = 0;
 
-        // --- PHASE 1 (Parallel Search) ---
-        #pragma omp parallel for default(none) shared(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, droneBakeryDist, proposals)
-        for (int c = 0; c < cCount; c++) {
-            proposals[c].isValid = 0;
-            proposals[c].bestTime = INFINITY;
+    // --- PHASE 1 ---
+    #pragma omp parallel for default(none) shared(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, droneBakeryDist, proposals)
+    for (int c = 0; c < cCount; c++) {
+        proposals[c].isValid = 0;
+        proposals[c].bestTime = INFINITY;
 
-            int remainingNeed = customers[c]->demand - customers[c]->reservedDemand;
-            if (customers[c]->status != CUSTOMER_ACTIVE || remainingNeed <= 0) continue;
+        int remainingNeed = customers[c]->demand - customers[c]->reservedDemand;
+        if (customers[c]->status != CUSTOMER_ACTIVE || remainingNeed <= 0) continue;
 
-            int matrixRow = customers[c]->distanceMatrixRow;
+        int matrixRow = customers[c]->distanceMatrixRow;
 
-            for (int b = 0; b < bCount; b++) {
-                int availableBread = bakeries[b].inventory - bakeries[b].reservedInventory;
-                if (availableBread <= 0) continue;
+        for (int b = 0; b < bCount; b++) {
+            int availableBread = bakeries[b].inventory - bakeries[b].reservedInventory;
+            if (availableBread <= 0) continue;
 
-                for (int d = 0; d < dCount; d++) {
-                    if (drones[d].currentCustomer != NULL) continue;
-                    if (drones[d].plannedLoad > 0) continue;
+            for (int d = 0; d < dCount; d++) {
+                if (drones[d].routeCount > 0) continue; 
+                if (drones[d].plannedLoad > 0) continue; 
 
-                    /*
-                    * Mock/Stage 3.5 friendly rule:
-                    * Do not immediately assign very slow drones if a faster drone
-                    * may still extend its route in Stage 3.5.
-                    */
-                    if (drones[d].velocity < 2.0) continue;
+                double flightTime = (droneBakeryDist[d][b] + distanceMatrix[matrixRow][b]) / drones[d].velocity;
 
-                    double flightTime = (droneBakeryDist[d][b] + distanceMatrix[matrixRow][b]) / drones[d].velocity;
-
-                    if (flightTime < proposals[c].bestTime) {
-                        proposals[c].bestTime = flightTime;
-                        proposals[c].bakeryId = b;
-                        proposals[c].droneId = d;
-                        proposals[c].isValid = 1;
-                    }
+                if (flightTime < proposals[c].bestTime) {
+                    proposals[c].bestTime = flightTime;
+                    proposals[c].bakeryId = b;
+                    proposals[c].droneId = d;
+                    proposals[c].isValid = 1;
                 }
             }
         }
+    }
 
-        // --- PHASE 2 (Sequential Commit) ---
-        for (int c = 0; c < cCount; c++) {
-            if (!proposals[c].isValid) continue;
+    // --- PHASE 2 ---
+    double maxVel = 0.1;
+    for (int i = 0; i < dCount; i++) if (drones[i].velocity > maxVel) maxVel = drones[i].velocity;
 
-            int dId = proposals[c].droneId;
-            int bId = proposals[c].bakeryId;
-            
-            int remainingNeed = customers[c]->demand - customers[c]->reservedDemand;
-            int availableBread = bakeries[bId].inventory - bakeries[bId].reservedInventory;
+    int bestC = -1;
+    double minTime = INFINITY;
 
-            if (drones[dId].currentCustomer == NULL &&
-                drones[dId].plannedLoad == 0 &&
-                availableBread > 0 &&
-                customers[c]->status == CUSTOMER_ACTIVE &&
-                remainingNeed > 0) {
+    for (int c = 0; c < cCount; c++) {
+        if (!proposals[c].isValid) continue;
 
-                int breadToTake = remainingNeed;
-                if (breadToTake > drones[dId].capacity) breadToTake = drones[dId].capacity;
-                if (breadToTake > availableBread) breadToTake = availableBread;
-                if (breadToTake <= 0) continue;
+        int dId = proposals[c].droneId;
+        int bId = proposals[c].bakeryId;
+        
+        int remainingNeed = customers[c]->demand - customers[c]->reservedDemand;
+        int availableBread = bakeries[bId].inventory - bakeries[bId].reservedInventory;
 
-                matchMade = 1;
+        if (drones[dId].routeCount == 0 && drones[dId].plannedLoad == 0 &&
+            availableBread > 0 && customers[c]->status == CUSTOMER_ACTIVE && remainingNeed > 0) {
 
-                drones[dId].currentCustomer = customers[c];
-                drones[dId].currentBakeryId = bId;
-
-                // Update Ledgers Only
-                bakeries[bId].reservedInventory += breadToTake;
-                customers[c]->reservedDemand += breadToTake;
-                drones[dId].plannedLoad = breadToTake;
-
-                int timeTaken = (int)ceil(proposals[c].bestTime);
-                if (timeTaken < 1) timeTaken = 1;
-                drones[dId].availableAtRound = currentRound + timeTaken;
+            if (proposals[c].bestTime < minTime) {
+                minTime = proposals[c].bestTime;
+                bestC = c;
             }
+        }
+    }
+
+    if (bestC != -1) {
+        int c = bestC;
+        int dId = proposals[c].droneId;
+        int bId = proposals[c].bakeryId;
+        
+        int remainingNeed = customers[c]->demand - customers[c]->reservedDemand;
+        int availableBread = bakeries[bId].inventory - bakeries[bId].reservedInventory;
+
+        int breadToTake = remainingNeed;
+        if (breadToTake > drones[dId].capacity) breadToTake = drones[dId].capacity;
+        if (breadToTake > availableBread) breadToTake = availableBread;
+
+        if (breadToTake > 0) {
+            drones[dId].route[0] = customers[c];
+            drones[dId].routeCount = 1;
+            drones[dId].currentRouteIdx = 0;
+            drones[dId].currentBakeryId = bId;
+
+            bakeries[bId].reservedInventory += breadToTake;
+            drones[dId].plannedLoad = breadToTake;
+
+            int isBackup = (drones[dId].velocity < maxVel * 0.5);
+            if (!isBackup) {
+                customers[c]->reservedDemand += breadToTake;
+            }
+
+            int timeTaken = (int)ceil(proposals[c].bestTime);
+            if (timeTaken < 1) timeTaken = 1;
+            drones[dId].availableAtRound = currentRound + timeTaken;
+
+            matchMade = 1;
         }
     }
 
     free(proposals);
     for (int d = 0; d < dCount; d++) free(droneBakeryDist[d]);
     free(droneBakeryDist);
+    return matchMade;
 }
 
 typedef struct {
@@ -231,95 +274,105 @@ typedef struct {
     int breadAmount;
     double detourTime;
     int isValid;
-} ExtensionProposal;
+} __attribute__((aligned(64))) ExtensionProposal;
 
-void extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, int currentRound) {
+int extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries, int bCount, Drone* drones, int dCount, int currentRound) {
     (void)bCount; (void)currentRound;
 
     ExtensionProposal* proposals = malloc(dCount * sizeof(ExtensionProposal));
     if (proposals == NULL) exit(1);
 
-    int extensionMade = 1;
-    while (extensionMade) {
-        extensionMade = 0;
+    int extensionMade = 0;
+    double maxVel = 0.1;
+    for (int i = 0; i < dCount; i++) if (drones[i].velocity > maxVel) maxVel = drones[i].velocity;
 
-        #pragma omp parallel for default(none) shared(drones, dCount, customers, cCount, bakeries, currentRound, proposals)
-        for (int d = 0; d < dCount; d++) {
-            proposals[d].isValid = 0;
-            proposals[d].detourTime = INFINITY;
+    #pragma omp parallel for default(none) shared(drones, dCount, customers, cCount, bakeries, maxVel, proposals)
+    for (int d = 0; d < dCount; d++) {
+        proposals[d].isValid = 0;
+        proposals[d].detourTime = INFINITY;
 
-            if (drones[d].currentCustomer == NULL) continue;
-            if (drones[d].secondaryCustomer != NULL) continue; // Only 2 stops max
-            if (drones[d].currentBakeryId < 0) continue; 
+        if (drones[d].routeCount == 0 || drones[d].routeCount >= MAX_ROUTE_STOPS) continue; 
+        if (drones[d].currentBakeryId < 0) continue; 
 
-            int bId = drones[d].currentBakeryId;
-            int spareCap = drones[d].capacity - drones[d].plannedLoad;
-            if (spareCap <= 0) continue;
+        // Backups are not allowed to multi-stop. They are too unpredictable!
+        int isBackup = (drones[d].velocity < maxVel * 0.25);
+        if (isBackup) continue;
+
+        int bId = drones[d].currentBakeryId;
+        int spareCap = drones[d].capacity - drones[d].plannedLoad;
+        if (spareCap <= 0) continue;
+        
+        int availableBread = bakeries[bId].inventory - bakeries[bId].reservedInventory;
+        if (availableBread <= 0) continue;
+
+        Customer* primaryCust = drones[d].route[0];
+        double primaryTripDist = calculateDistance(bakeries[bId].pos, primaryCust->pos);
+        double primaryTripTime = primaryTripDist / drones[d].velocity;
+        if (primaryTripTime <= 0.0) continue;
+        double maxDetourTime = 0.75 * primaryTripTime;
+
+        Customer* lastCust = drones[d].route[drones[d].routeCount - 1];
+
+        for (int c = 0; c < cCount; c++) {
+            Customer* cust = customers[c];
             
-            int availableBread = bakeries[bId].inventory - bakeries[bId].reservedInventory;
-            if (availableBread <= 0) continue;
+            int remainingNeed = cust->demand - cust->reservedDemand;
+            if (cust->status != CUSTOMER_ACTIVE || remainingNeed <= 0) continue;
+            
+            int alreadyInRoute = 0;
+            for(int r = 0; r < drones[d].routeCount; r++) {
+                if (drones[d].route[r] == cust) alreadyInRoute = 1;
+            }
+            if (alreadyInRoute) continue;
 
-            double primaryTripDist = calculateDistance(bakeries[bId].pos, drones[d].currentCustomer->pos);
-            double primaryTripTime = primaryTripDist / drones[d].velocity;
-            if (primaryTripTime <= 0.0) continue;
+            double detourDist = calculateDistance(lastCust->pos, cust->pos);
+            double detourTime = detourDist / drones[d].velocity;
+            if (detourTime > maxDetourTime) continue;
 
-            double maxDetourTime = 0.75 * primaryTripTime;
+            if (detourTime < proposals[d].detourTime) {
+                int amount = (remainingNeed < spareCap) ? remainingNeed : spareCap;
+                if (amount > availableBread) amount = availableBread;
+                if (amount <= 0) continue;
 
-            for (int c = 0; c < cCount; c++) {
-                Customer* cust = customers[c];
-                
-                int remainingNeed = cust->demand - cust->reservedDemand;
-                if (cust->status != CUSTOMER_ACTIVE || remainingNeed <= 0) continue;
-                if (cust == drones[d].currentCustomer) continue;
-
-                double extraStopDist = calculateDistance(drones[d].currentCustomer->pos, cust->pos);
-                double detourTime = extraStopDist / drones[d].velocity;
-
-                if (detourTime > maxDetourTime) continue;
-
-                if (detourTime < proposals[d].detourTime) {
-                    int amount = (remainingNeed < spareCap) ? remainingNeed : spareCap;
-                    if (amount > availableBread) amount = availableBread;
-                    if (amount <= 0) continue;
-
-                    proposals[d].detourTime = detourTime;
-                    proposals[d].extraCustomerIdx = c;
-                    proposals[d].breadAmount = amount;
-                    proposals[d].isValid = 1;
-                }
+                proposals[d].detourTime = detourTime;
+                proposals[d].extraCustomerIdx = c;
+                proposals[d].breadAmount = amount;
+                proposals[d].isValid = 1;
             }
         }
+    }
 
-        for (int d = 0; d < dCount; d++) {
-            if (!proposals[d].isValid) continue;
+    // Phase 2: Sequential Commit
+    for (int d = 0; d < dCount; d++) {
+        if (!proposals[d].isValid) continue;
 
-            int bId = drones[d].currentBakeryId;
-            int cIdx = proposals[d].extraCustomerIdx;
-            Customer* cust = customers[cIdx];
+        int bId = drones[d].currentBakeryId;
+        int cIdx = proposals[d].extraCustomerIdx;
+        Customer* cust = customers[cIdx];
 
-            int remainingNeed = cust->demand - cust->reservedDemand;
-            int availableBread = bakeries[bId].inventory - bakeries[bId].reservedInventory;
-            int spareCap = drones[d].capacity - drones[d].plannedLoad;
+        int remainingNeed = cust->demand - cust->reservedDemand;
+        int availableBread = bakeries[bId].inventory - bakeries[bId].reservedInventory;
+        int spareCap = drones[d].capacity - drones[d].plannedLoad;
 
-            if (cust->status != CUSTOMER_ACTIVE || remainingNeed <= 0 || availableBread <= 0 || spareCap <= 0) continue;
+        if (cust->status != CUSTOMER_ACTIVE || remainingNeed <= 0 || availableBread <= 0 || spareCap <= 0) continue;
 
-            int amount = proposals[d].breadAmount;
-            if (amount > remainingNeed)  amount = remainingNeed;
-            if (amount > spareCap)       amount = spareCap;
-            if (amount > availableBread) amount = availableBread;
-            if (amount <= 0) continue;
+        int amount = proposals[d].breadAmount;
+        if (amount > remainingNeed)  amount = remainingNeed;
+        if (amount > spareCap)       amount = spareCap;
+        if (amount > availableBread) amount = availableBread;
+        if (amount <= 0) continue;
 
-            // Update Ledgers for Multi-Stop
-            bakeries[bId].reservedInventory += amount;
-            cust->reservedDemand    += amount; 
-            drones[d].plannedLoad   += amount;
-            drones[d].secondaryCustomer = cust; 
-            
-            drones[d].availableAtRound += (int)ceil(proposals[d].detourTime);
-            extensionMade = 1;
-        }
+        bakeries[bId].reservedInventory += amount;
+        cust->reservedDemand    += amount; 
+        drones[d].plannedLoad   += amount;
+        
+        drones[d].route[drones[d].routeCount] = cust;
+        drones[d].routeCount++;
+        drones[d].availableAtRound += (int)ceil(proposals[d].detourTime);
+        extensionMade = 1;
     }
     free(proposals);
+    return extensionMade;
 }
 
 void parallelQuickSort(Customer** arr, int left, int right) {

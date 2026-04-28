@@ -13,8 +13,9 @@ void initBakery(const int id, const Position pos, const ProductionRule* distribu
     bakery->ruleCount = ruleCount;
     bakery->capacity = capacity;
 
-    // The inventory is initialized to 0
+    // The inventory and ledger are initialized to 0
     bakery->inventory = 0;
+    bakery->reservedInventory = 0; // NEW: Initialize the accounting ledger
 
     // We receive the distribution array which was created in the stack and allocate the memory for it
     bakery->cumulativeProb = malloc(sizeof(ProductionRule) * ruleCount);
@@ -37,6 +38,7 @@ void initCustomer(const int id, const Position pos, const int demand, Customer* 
     customer->id = id;
     customer->pos = pos;
     customer->demand = demand;
+    customer->reservedDemand = 0; // NEW: Initialize the accounting ledger
     customer->priority = 1; // When a new order is placed, the priority of the customer is 1
     customer->status = CUSTOMER_ACTIVE; // When a new order is placed, the customer is currently active
     customer->closestBakeryDistance = DBL_MAX;
@@ -48,11 +50,18 @@ void initCustomer(const int id, const Position pos, const int demand, Customer* 
 void initDrone(const int id, const int capacity, const int currentRound, const Position pos, const double velocity, Drone* drone) {
     drone->id = id;
     drone->capacity = capacity;
-    drone->load = 0; // Drones spawn without any bread loaves
+    
+    drone->load = 0; // Drones spawn without any physical bread
+    drone->plannedLoad = 0; // NEW: Drones spawn without any planned bread
+    
     drone->availableAtRound = currentRound; // New drones are available right away
     drone->pos = pos; // In main, we will call this with the position of the drone base
     drone->velocity = velocity;
-    drone->currentCustomer = NULL; // New drones are yet to be assigned a customer
+    
+    // NEW: Initialize the Static Route Queue
+    drone->routeCount = 0; 
+    drone->currentRouteIdx = 0; 
+    
     drone->currentBakeryId = -1;   // New drones are not yet associated with any bakery
 }
 

@@ -1,6 +1,8 @@
 #ifndef ENTITIES_H
 #define ENTITIES_H
 
+#define MAX_ROUTE_STOPS 10 // Maximum stops a drone can chain together on one trip
+
 typedef struct {
     double x;
     double y;
@@ -40,6 +42,7 @@ typedef struct {
     int distanceMatrixRow;
 } Customer;
 
+// ALIGNED TO 64 BYTES TO PREVENT FALSE SHARING IN ARRAYS
 typedef struct {
     int id;
     Position pos;
@@ -48,10 +51,13 @@ typedef struct {
     int capacity;
     double velocity;
     int availableAtRound;
-    Customer* currentCustomer;
-    Customer* secondaryCustomer; // For physical multi-stop VRP routes
+    
+    Customer* route[MAX_ROUTE_STOPS]; // The Static Route Queue
+    int routeCount;                   // Total stops planned
+    int currentRouteIdx;              // Which stop the drone is currently flying to
+    
     int currentBakeryId;
-} Drone;
+} __attribute__((aligned(64))) Drone;
 
 typedef struct {
     Position pos;

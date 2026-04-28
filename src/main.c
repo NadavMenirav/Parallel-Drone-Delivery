@@ -38,7 +38,7 @@ void updateDrones(Drone* drones, const int droneCount, const int currentRound, B
     for (int i = 0; i < droneCount; i++) {
         Drone* drone = &drones[i];
 
-        // Leg 1: Fly to the Bakery First!
+        // Leg 1: Fly to the Bakery First
         if (drone->currentBakeryId != -1) {
             Bakery* bakery = &bakeries[drone->currentBakeryId];
             double distance = calculateDistance(drone->pos, bakery->pos);
@@ -46,33 +46,35 @@ void updateDrones(Drone* drones, const int droneCount, const int currentRound, B
             if (distance <= drone->velocity || distance < 0.0001) {
                 drone->pos = bakery->pos;
                 
-                // PHYSICAL TRANSFER FROM BAKERY TO DRONE
-                bakery->inventory -= drone->plannedLoad;
-                bakery->reservedInventory -= drone->plannedLoad;
-                drone->load = drone->plannedLoad;
+                // Never take more than exists physically
+                int take = drone->plannedLoad;
+                if (take > bakery->inventory) take = bakery->inventory;
+
+                bakery->inventory -= take;
+                bakery->reservedInventory -= take;
+                if (bakery->reservedInventory < 0) bakery->reservedInventory = 0;
                 
-                drone->currentBakeryId = -1; // Done with bakery leg
+                drone->load = take;
+                drone->currentBakeryId = -1; 
             } else {
                 double ratio = drone->velocity / distance;
                 drone->pos.x += (bakery->pos.x - drone->pos.x) * ratio;
                 drone->pos.y += (bakery->pos.y - drone->pos.y) * ratio;
             }
-            continue; // Wait until next round to fly to customer
+            continue; 
         }
 
-        // Leg 2 & 3: Fly to Customers
-        if (drone->currentCustomer != NULL) {
-            Customer* customer = drone->currentCustomer;
+        // Leg 2: Fly the Static Route Queue
+        if (drone->routeCount > 0 && drone->currentRouteIdx < drone->routeCount) {
+            Customer* customer = drone->route[drone->currentRouteIdx];
             Position target = customer->pos;
             double distance = calculateDistance(drone->pos, target);
 
             if (distance <= drone->velocity || distance < 0.0001) {
                 drone->pos = target;
 
-                // PHYSICAL TRANSFER FROM DRONE TO CUSTOMER
                 int dropAmount = (drone->load > customer->demand) ? customer->demand : drone->load;
                 customer->demand -= dropAmount;
-                customer->reservedDemand -= dropAmount;
                 drone->load -= dropAmount;
 
                 if (customer->demand <= 0) {
@@ -80,22 +82,19 @@ void updateDrones(Drone* drones, const int droneCount, const int currentRound, B
                     customer->status = CUSTOMER_SERVED;
                 }
 
-                // Multi-stop routing
-                if (drone->secondaryCustomer != NULL) {
-                    drone->currentCustomer = drone->secondaryCustomer;
-                    drone->secondaryCustomer = NULL;
-                    continue; 
+                drone->currentRouteIdx++;
+
+                if (drone->currentRouteIdx >= drone->routeCount) {
+                    drone->routeCount = 0;
+                    drone->currentRouteIdx = 0;
+                    drone->plannedLoad = 0;
+                    drone->load = 0; // Discard leftover stolen bread
+                    drone->availableAtRound = currentRound;
+                    idleDroneRepositioning(bakeries, bakeryCount, drone);
                 }
-
-                drone->currentCustomer = NULL;
-                drone->plannedLoad = 0;
-                drone->availableAtRound = currentRound;
-
-                idleDroneRepositioning(bakeries, bakeryCount, drone);
                 continue;
             }
 
-            // Still flying
             double ratio = drone->velocity / distance;
             if (ratio > 1.0) ratio = 1.0;
             drone->pos.x += (target.x - drone->pos.x) * ratio;
@@ -103,11 +102,10 @@ void updateDrones(Drone* drones, const int droneCount, const int currentRound, B
             continue;
         }
 
-        // Idle drone moves slowly toward closest bakery
         if (drone->availableAtRound <= currentRound) {
             drone->availableAtRound = currentRound;
-            drone->currentCustomer = NULL;
-            drone->secondaryCustomer = NULL;
+            drone->routeCount = 0;
+            drone->currentRouteIdx = 0;
             drone->currentBakeryId = -1;
             drone->load = 0;
             drone->plannedLoad = 0;
@@ -164,16 +162,10 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
     *drones = (Drone*) malloc(sizeof(Drone) * (*dCount));
     *customers = (Customer**) malloc(sizeof(Customer*) * (*cCount));
 
-    if (*bakeries == NULL || *drones == NULL || *customers == NULL) {
-        exit(1);
-    }
+    if (*bakeries == NULL || *drones == NULL || *customers == NULL) exit(1);
 
     if (mockType == 4) {
-        double bakeryPos[2][2] = {
-            {60.0, 80.0},
-            {170.0, 140.0}
-        };
-
+        double bakeryPos[2][2] = { {60.0, 80.0}, {170.0, 140.0} };
         int bakeryCapacity[2] = {120, 120};
         int bakeryBread[2] = {10, 12};
         int bakerySeed[2] = {42, 99};
@@ -187,21 +179,13 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
             (*bakeries)[i].capacity = bakeryCapacity[i];
             (*bakeries)[i].seed = bakerySeed[i];
             (*bakeries)[i].ruleCount = 1;
-
             (*bakeries)[i].cumulativeProb = (ProductionRule*) malloc(sizeof(ProductionRule));
             if ((*bakeries)[i].cumulativeProb == NULL) exit(1);
-
             (*bakeries)[i].cumulativeProb[0].probability = 1.0;
             (*bakeries)[i].cumulativeProb[0].breadCount = bakeryBread[i];
         }
 
-        double droneStart[4][2] = {
-            {55.0, 75.0},
-            {70.0, 90.0},
-            {165.0, 135.0},
-            {20.0, 20.0}
-        };
-
+        double droneStart[4][2] = { {55.0, 75.0}, {70.0, 90.0}, {165.0, 135.0}, {20.0, 20.0} };
         double droneVelocity[4] = {9.0, 6.0, 8.0, 2.0};
         int droneCapacity[4] = {5, 4, 6, 3};
 
@@ -214,25 +198,17 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
             (*drones)[i].load = 0;
             (*drones)[i].plannedLoad = 0;
             (*drones)[i].availableAtRound = 0;
-            (*drones)[i].currentCustomer = NULL;
-            (*drones)[i].secondaryCustomer = NULL;
+            (*drones)[i].routeCount = 0;
+            (*drones)[i].currentRouteIdx = 0;
             (*drones)[i].currentBakeryId = -1;
         }
 
-        double customerPositions[5][2] = {
-            {40.0, 170.0},
-            {95.0, 160.0},
-            {150.0, 185.0},
-            {185.0, 70.0},
-            {120.0, 110.0}
-        };
-
+        double customerPositions[5][2] = { {40.0, 170.0}, {95.0, 160.0}, {150.0, 185.0}, {185.0, 70.0}, {120.0, 110.0} };
         int customerDemand[5] = {3, 7, 2, 5, 4};
 
         for (int i = 0; i < *cCount; i++) {
             (*customers)[i] = (Customer*) malloc(sizeof(Customer));
             if ((*customers)[i] == NULL) exit(1);
-
             (*customers)[i]->id = i + 1;
             (*customers)[i]->pos.x = customerPositions[i][0];
             (*customers)[i]->pos.y = customerPositions[i][1];
@@ -244,7 +220,6 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
             (*customers)[i]->tempScore = -1.0;
             (*customers)[i]->distanceMatrixRow = -1;
         }
-
         return;
     }
 
@@ -256,52 +231,30 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
     (*bakeries)[0].capacity = 100;
     (*bakeries)[0].seed = 42;
     (*bakeries)[0].ruleCount = 1;
-
     (*bakeries)[0].cumulativeProb = (ProductionRule*) malloc(sizeof(ProductionRule));
     if ((*bakeries)[0].cumulativeProb == NULL) exit(1);
-
     (*bakeries)[0].cumulativeProb[0].probability = 1.0;
     (*bakeries)[0].cumulativeProb[0].breadCount = 8;
 
-    double droneStart[2][2] = {
-        {20.0, 20.0},
-        {180.0, 20.0}
-    };
-
+    double droneStart[2][2] = { {20.0, 20.0}, {180.0, 20.0} };
     double droneVelocity[2] = {8.0, 8.0};
     int droneCapacity[2] = {5, 5};
 
-    double customerPositions[2][2] = {
-        {30.0, 185.0},
-        {175.0, 180.0}
-    };
-
+    double customerPositions[2][2] = { {30.0, 185.0}, {175.0, 180.0} };
     int customerDemand[2];
 
     if (mockType == 1) {
-        customerDemand[0] = 4;
-        customerDemand[1] = 4;
+        customerDemand[0] = 4; customerDemand[1] = 4;
     } else if (mockType == 2) {
-        customerDemand[0] = 9;
-        customerDemand[1] = 2;
+        customerDemand[0] = 9; customerDemand[1] = 2;
     } else {
-        customerDemand[0] = 2;
-        customerDemand[1] = 2;
-
-        customerPositions[0][0] = 125.0;
-        customerPositions[0][1] = 165.0;
-        customerPositions[1][0] = 145.0;
-        customerPositions[1][1] = 175.0;
-
-        droneStart[0][0] = 100.0;
-        droneStart[0][1] = 100.0;
-        droneVelocity[0] = 10.0;
-        droneCapacity[0] = 5;
-
-        droneStart[1][0] = 10.0;
-        droneStart[1][1] = 10.0;
-        droneVelocity[1] = 0.5;
-        droneCapacity[1] = 5;
+        customerDemand[0] = 2; customerDemand[1] = 2;
+        customerPositions[0][0] = 125.0; customerPositions[0][1] = 165.0;
+        customerPositions[1][0] = 145.0; customerPositions[1][1] = 175.0;
+        droneStart[0][0] = 100.0; droneStart[0][1] = 100.0;
+        droneVelocity[0] = 10.0; droneCapacity[0] = 5;
+        droneStart[1][0] = 10.0; droneStart[1][1] = 10.0;
+        droneVelocity[1] = 0.5; droneCapacity[1] = 5;
     }
 
     for (int i = 0; i < *dCount; i++) {
@@ -313,15 +266,14 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
         (*drones)[i].load = 0;
         (*drones)[i].plannedLoad = 0;
         (*drones)[i].availableAtRound = 0;
-        (*drones)[i].currentCustomer = NULL;
-        (*drones)[i].secondaryCustomer = NULL;
+        (*drones)[i].routeCount = 0;
+        (*drones)[i].currentRouteIdx = 0;
         (*drones)[i].currentBakeryId = -1;
     }
 
     for (int i = 0; i < *cCount; i++) {
         (*customers)[i] = (Customer*) malloc(sizeof(Customer));
         if ((*customers)[i] == NULL) exit(1);
-
         (*customers)[i]->id = i + 1;
         (*customers)[i]->pos.x = customerPositions[i][0];
         (*customers)[i]->pos.y = customerPositions[i][1];
@@ -334,6 +286,7 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
         (*customers)[i]->distanceMatrixRow = -1;
     }
 }
+
 void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCount, Customer*** customers, int* cCount) {
     *bCount = 500;
     *dCount = 50;
@@ -363,10 +316,8 @@ void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCoun
         (*bakeries)[i].capacity = bDefs[bIdx].capacity;
         (*bakeries)[i].seed = 12345 + i;
         (*bakeries)[i].ruleCount = 3;
-
         (*bakeries)[i].cumulativeProb = (ProductionRule*)malloc(3 * sizeof(ProductionRule));
         if ((*bakeries)[i].cumulativeProb == NULL) exit(1);
-
         for (int r = 0; r < 3; r++) {
             (*bakeries)[i].cumulativeProb[r].breadCount = bDefs[bIdx].rules[r][0];
             (*bakeries)[i].cumulativeProb[r].probability = bDefs[bIdx].rules[r][1] / 100.0;
@@ -391,8 +342,8 @@ void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCoun
         (*drones)[i].load = 0;
         (*drones)[i].plannedLoad = 0;
         (*drones)[i].availableAtRound = 0;
-        (*drones)[i].currentCustomer = NULL;
-        (*drones)[i].secondaryCustomer = NULL;
+        (*drones)[i].routeCount = 0;
+        (*drones)[i].currentRouteIdx = 0;
         (*drones)[i].currentBakeryId = -1;
     }
 
@@ -410,7 +361,6 @@ void initSystemStress(Bakery** bakeries, int* bCount, Drone** drones, int* dCoun
         int cIdx = i % 20;
         (*customers)[i] = (Customer*) malloc(sizeof(Customer));
         if ((*customers)[i] == NULL) exit(1);
-
         (*customers)[i]->id = i + 1;
         (*customers)[i]->pos.x = cDefs[cIdx].x + ((rand() % 10) - 5);
         (*customers)[i]->pos.y = cDefs[cIdx].y + ((rand() % 10) - 5);
@@ -439,9 +389,6 @@ void findClosestBakery(Bakery* bakeries, const int bCount, Customer** customers,
 
 int main(int argc, char* argv[]) {
 
-    // =========================================================================
-    // UI EXPORT MODE
-    // =========================================================================
     if (argc > 1 && strcmp(argv[1], "--export") == 0) {
         int maxRounds = 100;
 
@@ -456,10 +403,10 @@ int main(int argc, char* argv[]) {
         int mockType = 1;
 
         if (argc > 2) {
-            if (strcmp(argv[2], "mock1") == 0) mockType = 1;
-            else if (strcmp(argv[2], "mock2") == 0) mockType = 2;
-            else if (strcmp(argv[2], "mock3") == 0) mockType = 3;
-            else if (strcmp(argv[2], "mock4") == 0) mockType = 4;
+            if (strcmp(argv[2], "mock1") == 0 || strcmp(argv[2], "1") == 0) mockType = 1;
+            else if (strcmp(argv[2], "mock2") == 0 || strcmp(argv[2], "2") == 0) mockType = 2;
+            else if (strcmp(argv[2], "mock3") == 0 || strcmp(argv[2], "3") == 0) mockType = 3;
+            else if (strcmp(argv[2], "mock4") == 0 || strcmp(argv[2], "4") == 0) mockType = 4;
         }
 
         initSystemMock(&bakeries, &bCount, &drones, &dCount, &customers, &cCount, mockType);
@@ -482,8 +429,18 @@ int main(int argc, char* argv[]) {
             calculateCustomerScoresStage2(customers, cCount, avgVelocity, avgCapacity);
             sortCustomersParallel(customers, cCount);
 
-            assignDronesStage3(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, t);
-            extendTripsMultiCustomer(customers, cCount, bakeries, bCount, drones, dCount, t);
+            // ====================================================
+            // THE REACTIVE LEDGER UPDATE
+            // Rebuilds reality before assigning drones
+            // ====================================================
+            rebuildCustomerLedger(customers, cCount, drones, dCount);
+
+            int routingActive = 1;
+            while (routingActive) {
+                int m1 = assignDronesStage3(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, t);
+                int m2 = extendTripsMultiCustomer(customers, cCount, bakeries, bCount, drones, dCount, t);
+                routingActive = m1 || m2;
+            }
 
             updateCustomerPriorities(customers, cCount);
             processCustomerTransitions(customers, cCount, t);
@@ -512,6 +469,12 @@ int main(int argc, char* argv[]) {
 
                 fprintf(jsonFile, "    \"drones\": [\n");
                 for (int d = 0; d < dCount; d++) {
+                    
+                    int isDelivering = (drones[d].routeCount > 0);
+                    int targetId = (isDelivering && drones[d].currentRouteIdx < drones[d].routeCount) 
+                                    ? drones[d].route[drones[d].currentRouteIdx]->id 
+                                    : -1;
+
                     fprintf(jsonFile,
                         "      {\"id\": %d, \"pos\": {\"x\": %f, \"y\": %f}, "
                         "\"load\": %d, \"capacity\": %d, \"availableAtRound\": %d, "
@@ -519,11 +482,11 @@ int main(int argc, char* argv[]) {
                         drones[d].id,
                         drones[d].pos.x,
                         drones[d].pos.y,
-                        drones[d].load, // This is now 100% physical!
+                        drones[d].load,
                         drones[d].capacity,
                         drones[d].availableAtRound,
-                        drones[d].currentCustomer == NULL ? "IDLE" : "DELIVERING",
-                        drones[d].currentCustomer == NULL ? -1 : drones[d].currentCustomer->id,
+                        isDelivering ? "DELIVERING" : "IDLE",
+                        targetId,
                         drones[d].currentBakeryId,
                         (d == dCount - 1) ? "" : ","
                     );
@@ -558,9 +521,6 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    // =========================================================================
-    // STRESS BENCHMARK MODE
-    // =========================================================================
     printf("==================================================\n");
     printf("   DRONE DELIVERY SIMULATION - STRESS BENCHMARK   \n");
     printf("==================================================\n");
@@ -608,8 +568,14 @@ int main(int argc, char* argv[]) {
 
             sortCustomersParallel(customers, cCount);
 
-            assignDronesStage3(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, t);
-            extendTripsMultiCustomer(customers, cCount, bakeries, bCount, drones, dCount, t);
+            rebuildCustomerLedger(customers, cCount, drones, dCount);
+
+            int routingActive = 1;
+            while (routingActive) {
+                int m1 = assignDronesStage3(customers, cCount, bakeries, bCount, drones, dCount, distanceMatrix, t);
+                int m2 = extendTripsMultiCustomer(customers, cCount, bakeries, bCount, drones, dCount, t);
+                routingActive = m1 || m2;
+            }
 
             updateCustomerPriorities(customers, cCount);
             processCustomerTransitions(customers, cCount, t);

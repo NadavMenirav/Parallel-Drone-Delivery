@@ -150,9 +150,15 @@ void idleDroneRepositioning(Bakery* bakeries, const int bakeryCount, Drone* dron
 void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
                     Customer*** customers, int* cCount, int mockType) {
 
-    *bCount = 1;
-    *dCount = 2;
-    *cCount = 2;
+    if (mockType == 4) {
+        *bCount = 2;
+        *dCount = 4;
+        *cCount = 5;
+    } else {
+        *bCount = 1;
+        *dCount = 2;
+        *cCount = 2;
+    }
 
     *bakeries = (Bakery*) malloc(sizeof(Bakery) * (*bCount));
     *drones = (Drone*) malloc(sizeof(Drone) * (*dCount));
@@ -162,18 +168,97 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
         exit(1);
     }
 
+    if (mockType == 4) {
+        double bakeryPos[2][2] = {
+            {60.0, 80.0},
+            {170.0, 140.0}
+        };
+
+        int bakeryCapacity[2] = {120, 120};
+        int bakeryBread[2] = {10, 12};
+        int bakerySeed[2] = {42, 99};
+
+        for (int i = 0; i < *bCount; i++) {
+            (*bakeries)[i].id = i + 1;
+            (*bakeries)[i].pos.x = bakeryPos[i][0];
+            (*bakeries)[i].pos.y = bakeryPos[i][1];
+            (*bakeries)[i].inventory = 0;
+            (*bakeries)[i].reservedInventory = 0;
+            (*bakeries)[i].capacity = bakeryCapacity[i];
+            (*bakeries)[i].seed = bakerySeed[i];
+            (*bakeries)[i].ruleCount = 1;
+
+            (*bakeries)[i].cumulativeProb = (ProductionRule*) malloc(sizeof(ProductionRule));
+            if ((*bakeries)[i].cumulativeProb == NULL) exit(1);
+
+            (*bakeries)[i].cumulativeProb[0].probability = 1.0;
+            (*bakeries)[i].cumulativeProb[0].breadCount = bakeryBread[i];
+        }
+
+        double droneStart[4][2] = {
+            {55.0, 75.0},
+            {70.0, 90.0},
+            {165.0, 135.0},
+            {20.0, 20.0}
+        };
+
+        double droneVelocity[4] = {9.0, 6.0, 8.0, 2.0};
+        int droneCapacity[4] = {5, 4, 6, 3};
+
+        for (int i = 0; i < *dCount; i++) {
+            (*drones)[i].id = i + 1;
+            (*drones)[i].pos.x = droneStart[i][0];
+            (*drones)[i].pos.y = droneStart[i][1];
+            (*drones)[i].velocity = droneVelocity[i];
+            (*drones)[i].capacity = droneCapacity[i];
+            (*drones)[i].load = 0;
+            (*drones)[i].plannedLoad = 0;
+            (*drones)[i].availableAtRound = 0;
+            (*drones)[i].currentCustomer = NULL;
+            (*drones)[i].secondaryCustomer = NULL;
+            (*drones)[i].currentBakeryId = -1;
+        }
+
+        double customerPositions[5][2] = {
+            {40.0, 170.0},
+            {95.0, 160.0},
+            {150.0, 185.0},
+            {185.0, 70.0},
+            {120.0, 110.0}
+        };
+
+        int customerDemand[5] = {3, 7, 2, 5, 4};
+
+        for (int i = 0; i < *cCount; i++) {
+            (*customers)[i] = (Customer*) malloc(sizeof(Customer));
+            if ((*customers)[i] == NULL) exit(1);
+
+            (*customers)[i]->id = i + 1;
+            (*customers)[i]->pos.x = customerPositions[i][0];
+            (*customers)[i]->pos.y = customerPositions[i][1];
+            (*customers)[i]->priority = 1;
+            (*customers)[i]->status = CUSTOMER_ACTIVE;
+            (*customers)[i]->demand = customerDemand[i];
+            (*customers)[i]->reservedDemand = 0;
+            (*customers)[i]->closestBakeryDistance = DBL_MAX;
+            (*customers)[i]->tempScore = -1.0;
+            (*customers)[i]->distanceMatrixRow = -1;
+        }
+
+        return;
+    }
+
     (*bakeries)[0].id = 1;
     (*bakeries)[0].pos.x = 100.0;
     (*bakeries)[0].pos.y = 100.0;
     (*bakeries)[0].inventory = 0;
+    (*bakeries)[0].reservedInventory = 0;
     (*bakeries)[0].capacity = 100;
     (*bakeries)[0].seed = 42;
     (*bakeries)[0].ruleCount = 1;
 
     (*bakeries)[0].cumulativeProb = (ProductionRule*) malloc(sizeof(ProductionRule));
-    if ((*bakeries)[0].cumulativeProb == NULL) {
-        exit(1);
-    }
+    if ((*bakeries)[0].cumulativeProb == NULL) exit(1);
 
     (*bakeries)[0].cumulativeProb[0].probability = 1.0;
     (*bakeries)[0].cumulativeProb[0].breadCount = 8;
@@ -196,13 +281,10 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
     if (mockType == 1) {
         customerDemand[0] = 4;
         customerDemand[1] = 4;
-
     } else if (mockType == 2) {
         customerDemand[0] = 9;
         customerDemand[1] = 2;
-
     } else {
-        // Mock 3: one strong drone should serve both customers.
         customerDemand[0] = 2;
         customerDemand[1] = 2;
 
@@ -211,13 +293,11 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
         customerPositions[1][0] = 145.0;
         customerPositions[1][1] = 175.0;
 
-        // Good drone: starts near bakery, fast, enough capacity for both.
         droneStart[0][0] = 100.0;
         droneStart[0][1] = 100.0;
         droneVelocity[0] = 10.0;
         droneCapacity[0] = 5;
 
-        // Bad drone: far and very slow.
         droneStart[1][0] = 10.0;
         droneStart[1][1] = 10.0;
         droneVelocity[1] = 0.5;
@@ -231,16 +311,16 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
         (*drones)[i].velocity = droneVelocity[i];
         (*drones)[i].capacity = droneCapacity[i];
         (*drones)[i].load = 0;
+        (*drones)[i].plannedLoad = 0;
         (*drones)[i].availableAtRound = 0;
         (*drones)[i].currentCustomer = NULL;
+        (*drones)[i].secondaryCustomer = NULL;
         (*drones)[i].currentBakeryId = -1;
     }
 
     for (int i = 0; i < *cCount; i++) {
         (*customers)[i] = (Customer*) malloc(sizeof(Customer));
-        if ((*customers)[i] == NULL) {
-            exit(1);
-        }
+        if ((*customers)[i] == NULL) exit(1);
 
         (*customers)[i]->id = i + 1;
         (*customers)[i]->pos.x = customerPositions[i][0];
@@ -379,6 +459,7 @@ int main(int argc, char* argv[]) {
             if (strcmp(argv[2], "mock1") == 0) mockType = 1;
             else if (strcmp(argv[2], "mock2") == 0) mockType = 2;
             else if (strcmp(argv[2], "mock3") == 0) mockType = 3;
+            else if (strcmp(argv[2], "mock4") == 0) mockType = 4;
         }
 
         initSystemMock(&bakeries, &bCount, &drones, &dCount, &customers, &cCount, mockType);

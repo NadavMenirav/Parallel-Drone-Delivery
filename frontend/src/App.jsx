@@ -214,6 +214,13 @@ function App() {
             >
               Mock 3: Multi Stop
             </button>
+            <button
+              className={selectedMock === 'mock4' ? 'active' : ''}
+              onClick={() => runMock('mock4')}
+              disabled={isLoading}
+            >
+              Mock 4: Full System
+            </button>
           </div>
         </div>
 

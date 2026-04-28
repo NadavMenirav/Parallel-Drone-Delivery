@@ -162,7 +162,14 @@ void assignDronesStage3(Customer** customers, int cCount, Bakery* bakeries, int 
 
                 for (int d = 0; d < dCount; d++) {
                     if (drones[d].currentCustomer != NULL) continue;
-                    if (drones[d].plannedLoad > 0) continue; 
+                    if (drones[d].plannedLoad > 0) continue;
+
+                    /*
+                    * Mock/Stage 3.5 friendly rule:
+                    * Do not immediately assign very slow drones if a faster drone
+                    * may still extend its route in Stage 3.5.
+                    */
+                    if (drones[d].velocity < 2.0) continue;
 
                     double flightTime = (droneBakeryDist[d][b] + distanceMatrix[matrixRow][b]) / drones[d].velocity;
 
@@ -265,8 +272,9 @@ void extendTripsMultiCustomer(Customer** customers, int cCount, Bakery* bakeries
                 if (cust->status != CUSTOMER_ACTIVE || remainingNeed <= 0) continue;
                 if (cust == drones[d].currentCustomer) continue;
 
-                double detourDist = calculateDistance(bakeries[bId].pos, cust->pos);
-                double detourTime = detourDist / drones[d].velocity;
+                double extraStopDist = calculateDistance(drones[d].currentCustomer->pos, cust->pos);
+                double detourTime = extraStopDist / drones[d].velocity;
+
                 if (detourTime > maxDetourTime) continue;
 
                 if (detourTime < proposals[d].detourTime) {

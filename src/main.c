@@ -183,17 +183,8 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
         {180.0, 20.0}
     };
 
-    for (int i = 0; i < *dCount; i++) {
-        (*drones)[i].id = i + 1;
-        (*drones)[i].pos.x = droneStart[i][0];
-        (*drones)[i].pos.y = droneStart[i][1];
-        (*drones)[i].velocity = 8.0;
-        (*drones)[i].capacity = 5;
-        (*drones)[i].load = 0;
-        (*drones)[i].availableAtRound = 0;
-        (*drones)[i].currentCustomer = NULL;
-        (*drones)[i].currentBakeryId = -1;
-    }
+    double droneVelocity[2] = {8.0, 8.0};
+    int droneCapacity[2] = {5, 5};
 
     double customerPositions[2][2] = {
         {30.0, 185.0},
@@ -203,17 +194,46 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
     int customerDemand[2];
 
     if (mockType == 1) {
-        // Balanced: each customer can be served by one drone.
         customerDemand[0] = 4;
         customerDemand[1] = 4;
+
     } else if (mockType == 2) {
-        // Split-order demo: customer 1 needs more than one drone capacity.
         customerDemand[0] = 9;
         customerDemand[1] = 2;
+
     } else {
-        // Multi-stop demo: both customers have small demand.
+        // Mock 3: one strong drone should serve both customers.
         customerDemand[0] = 2;
         customerDemand[1] = 2;
+
+        customerPositions[0][0] = 125.0;
+        customerPositions[0][1] = 165.0;
+        customerPositions[1][0] = 145.0;
+        customerPositions[1][1] = 175.0;
+
+        // Good drone: starts near bakery, fast, enough capacity for both.
+        droneStart[0][0] = 100.0;
+        droneStart[0][1] = 100.0;
+        droneVelocity[0] = 10.0;
+        droneCapacity[0] = 5;
+
+        // Bad drone: far and very slow.
+        droneStart[1][0] = 10.0;
+        droneStart[1][1] = 10.0;
+        droneVelocity[1] = 0.5;
+        droneCapacity[1] = 5;
+    }
+
+    for (int i = 0; i < *dCount; i++) {
+        (*drones)[i].id = i + 1;
+        (*drones)[i].pos.x = droneStart[i][0];
+        (*drones)[i].pos.y = droneStart[i][1];
+        (*drones)[i].velocity = droneVelocity[i];
+        (*drones)[i].capacity = droneCapacity[i];
+        (*drones)[i].load = 0;
+        (*drones)[i].availableAtRound = 0;
+        (*drones)[i].currentCustomer = NULL;
+        (*drones)[i].currentBakeryId = -1;
     }
 
     for (int i = 0; i < *cCount; i++) {
@@ -228,12 +248,7 @@ void initSystemMock(Bakery** bakeries, int* bCount, Drone** drones, int* dCount,
         (*customers)[i]->priority = 1;
         (*customers)[i]->status = CUSTOMER_ACTIVE;
         (*customers)[i]->demand = customerDemand[i];
-
-        // CRITICAL FIX:
-        // Without this, reservedDemand contains garbage like 3437936,
-        // so assignment thinks the customer is already over-reserved.
         (*customers)[i]->reservedDemand = 0;
-
         (*customers)[i]->closestBakeryDistance = DBL_MAX;
         (*customers)[i]->tempScore = -1.0;
         (*customers)[i]->distanceMatrixRow = -1;
